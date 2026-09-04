@@ -1,8 +1,24 @@
-## taypme/os
+# taypme/os
 
 `taypme/os` is a persistent Ubuntu Cinnamon remix builder. It uses the scripts in this repository to create a bootable USB stick based on the latest Ubuntu Cinnamon desktop ISO, then installs this repo's custom package set into the USB's persistent overlay.
 
 The main entry point is [`persist.sh`](./persist.sh). It writes the ISO to a USB disk, creates an ext4 persistence partition labeled `writable`, copies this repo into `/home/casper/os`, and runs [`os.sh`](./os.sh) inside the persistent live system.
+
+> **Warning:** `persist.sh` is a destructive disk-imaging tool. Verify the
+> target with `lsblk` every time. Never substitute a partition for the whole
+> USB device, and never run it against a disk containing data you need.
+
+## Choose an operation
+
+- Build a new persistent USB: `sudo bash ./persist.sh /dev/sdX`
+- Rerun the software installation on an existing build:
+  `sudo bash ./persist.sh /dev/sdX --resume`
+- Install the package set directly in the current Ubuntu Cinnamon system:
+  `sudo bash ./os.sh`
+
+`os.sh` must run as root and sources the ordered modules in `sh/`. The `sh/`
+directory is the source of truth for installed, configured, and removed tools;
+the package lists below are a readable summary of that configuration.
 
 ### How To Use
 
