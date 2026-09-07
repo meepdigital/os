@@ -4,7 +4,7 @@ BACKGROUND_SOURCE="${SCRIPT_DIR}/assets/bg.svg"
 BACKGROUND_DIR=/usr/share/backgrounds
 BACKGROUND_PATH="${BACKGROUND_DIR}/bg.svg"
 DCONF_DEFAULTS_DIR=/etc/dconf/db/local.d
-DCONF_DEFAULTS_FILE="${DCONF_DEFAULTS_DIR}/00-ubuntu-tayp-appearance"
+DCONF_DEFAULTS_FILE="${DCONF_DEFAULTS_DIR}/00-ubuntu-meep-appearance"
 
 if [[ ! -f "${BACKGROUND_SOURCE}" ]]; then
 	echo "Missing background asset: ${BACKGROUND_SOURCE}" >&2

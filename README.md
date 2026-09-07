@@ -1,6 +1,6 @@
-# taypme/os
+# meepdigital/os
 
-`taypme/os` is a persistent Ubuntu Cinnamon remix builder. It uses the scripts in this repository to create a bootable USB stick based on the latest Ubuntu Cinnamon desktop ISO, then installs this repo's custom package set into the USB's persistent overlay.
+`meepdigital/os` is a persistent Ubuntu Cinnamon remix builder. It uses the scripts in this repository to create a bootable USB stick based on the latest Ubuntu Cinnamon desktop ISO, then installs this repo's custom package set into the USB's persistent overlay.
 
 The main entry point is [`persist.sh`](./persist.sh). It writes the ISO to a USB disk, creates an ext4 persistence partition labeled `writable`, copies this repo into `/home/casper/os`, and runs [`os.sh`](./os.sh) inside the persistent live system.
 
@@ -32,7 +32,7 @@ lsblk -o NAME,PATH,SIZE,FSTYPE,LABEL,MODEL,MOUNTPOINTS
 Create the persistent Ubuntu Cinnamon USB:
 
 ```bash
-git clone https://github.com/taypme/os
+git clone https://github.com/meepdigital/os
 cd os
 sudo bash ./persist.sh /dev/sdX
 ```
@@ -44,6 +44,19 @@ To rerun only the persistent overlay install work on an already-created USB:
 ```bash
 sudo bash ./persist.sh /dev/sdX --resume
 ```
+
+New USBs contain two live boot modes:
+
+- **Ubuntu Meep - Persistent Live** keeps durable changes on the USB and uses
+  RAM-backed `/tmp` and APT cache plus compressed RAM swap when booted.
+- **Ubuntu Meep - Fast RAM Live** adds `toram`, copying the read-only live OS
+  into RAM while retaining the persistent layer and the graphical installer.
+
+Both modes can still launch the normal Ubuntu installer and install to a
+separate internal disk with ordinary mounts. The performance design is
+installed by `sh/design.sh` from `os.sh`; it does not put `/usr`, the package
+database, or user data in tmpfs. Rebuild an older USB in create mode to replace
+its immutable ISO boot menu; `--resume` only reruns the persistent overlay work.
 
 ### Included APT Packages
 

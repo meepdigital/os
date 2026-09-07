@@ -175,23 +175,37 @@ resolve_latest_iso() {
   ISO="${SCRIPT_DIR}/${iso_name}"
   CUSTOM_ISO="${SCRIPT_DIR}/${iso_name%.iso}-persistent.iso"
 
+  # Download into the repo directory so later runs are repeatable and do not
+  # depend on a host-specific cache location. Existing ISOs are still checked;
+  # a previous failed verification must never become a trusted artifact.
   if [[ -f "${ISO}" ]]; then
     echo "Using existing ISO: ${ISO}"
-    return 0
+  else
+    echo "Downloading ${iso_url}"
+    curl -fL --progress-bar "${iso_url}" -o "${ISO}.part"
+    mv "${ISO}.part" "${ISO}"
   fi
-
-  # Download into the repo directory so later runs are repeatable and do not
-  # depend on a host-specific cache location.
-  echo "Downloading ${iso_url}"
-  curl -fL --progress-bar "${iso_url}" -o "${ISO}.part"
-  mv "${ISO}.part" "${ISO}"
 
   echo "Verifying ${iso_name} against SHA256SUMS..."
   curl -fsSL "${sums_url}" -o "${WORK}/SHA256SUMS"
-  (
-    cd "${SCRIPT_DIR}"
-    grep -F " ${iso_name}" "${WORK}/SHA256SUMS" | sha256sum -c -
-  )
+  expected_checksum="$(
+    awk -v target="${iso_name}" '
+      {
+        sub(/\r$/, "")
+        filename=$2
+        sub(/^\*/, "", filename)
+        if (filename == target && $1 ~ /^[[:xdigit:]]{64}$/) {
+          print $1
+          exit
+        }
+      }
+    ' "${WORK}/SHA256SUMS"
+  )"
+  if [[ -z "${expected_checksum}" ]]; then
+    echo "No valid SHA-256 record found for ${iso_name} in ${WORK}/SHA256SUMS" >&2
+    exit 1
+  fi
+  printf '%s  %s\n' "${expected_checksum}" "${ISO}" | sha256sum -c -
 }
 
 cleanup_existing_tree() {
@@ -236,13 +250,39 @@ cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-build"
 cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-resume"
 
 remaster_iso() {
-  echo "Preparing remastered ISO with persistent boot argument..."
+  echo "Preparing remastered ISO with Ubuntu Meep dual boot modes..."
   rm -f "${CUSTOM_ISO}"
   xorriso -osirrox on -indev "${ISO}" -extract /boot/grub/grub.cfg "${WORK}/grub.cfg.orig" >/dev/null 2>&1
   sed \
     -e 's#linux  /casper/vmlinuz  --- quiet splash#linux  /casper/vmlinuz persistent --- quiet splash#' \
     -e 's#linux  /casper/vmlinuz nomodeset  --- quiet splash#linux  /casper/vmlinuz nomodeset persistent --- quiet splash#' \
+    -e 's/Ubuntu Cinnamon/Ubuntu Meep/g' \
     "${WORK}/grub.cfg.orig" >"${WORK}/grub.cfg"
+
+  # Keep the normal persistent live mode first so it remains the safe default.
+  # The second mode copies casper's read-only system image into RAM. Both modes
+  # still boot the graphical installer; toram changes where the live OS reads
+  # from, not where a user may install the final system.
+  awk '
+    /menuentry "Try or Install Ubuntu Meep"/ && !inserted {
+      print "menuentry \"Ubuntu Meep - Persistent Live\" {"
+      in_entry = 1
+      next
+    }
+    in_entry && /^}/ {
+      print
+      print "menuentry \"Ubuntu Meep - Fast RAM Live\" {"
+      print "    set gfxpayload=keep"
+      print "    linux  /casper/vmlinuz persistent toram --- quiet splash"
+      print "    initrd /casper/initrd"
+      print "}"
+      inserted = 1
+      in_entry = 0
+      next
+    }
+    { print }
+  ' "${WORK}/grub.cfg" >"${WORK}/grub.cfg.modes"
+  mv "${WORK}/grub.cfg.modes" "${WORK}/grub.cfg"
   xorriso -indev "${ISO}" -outdev "${CUSTOM_ISO}" -boot_image any replay -map "${WORK}/grub.cfg" /boot/grub/grub.cfg
 }
 
@@ -545,6 +585,11 @@ prepare_chroot_mounts() {
   echo "Preparing chroot mounts..."
   mount --bind /dev "${WORK}/root/dev"
   mount --bind /dev/pts "${WORK}/root/dev/pts"
+  # A plain /dev bind does not reliably carry the host's /dev/shm submount
+  # into the chroot. Expose it explicitly for tools that need a non-overlay
+  # extraction workspace, such as the Node.js installer in sh/npm.sh.
+  mkdir -p "${WORK}/root/dev/shm"
+  mount --bind /dev/shm "${WORK}/root/dev/shm"
   mount -t proc proc "${WORK}/root/proc"
   mount -t sysfs sysfs "${WORK}/root/sys"
   rm -f "${WORK}/root/etc/resolv.conf"

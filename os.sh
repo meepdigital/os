@@ -30,3 +30,4 @@ source_part npm
 source_part purge
 source_part boot
 source_part appearance
+source_part design
