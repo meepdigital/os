@@ -45,7 +45,7 @@ if ((${#PURGE_PACKAGES[@]})); then
 	apt-get purge -y "${PURGE_PACKAGES[@]}"
 fi
 
-if command -v snap >/dev/null 2>&1 && ((${#PURGE_SNAPS[@]})); then
+if [[ ${MEEP_CHROOT:-0} != 1 ]] && command -v snap >/dev/null 2>&1 && ((${#PURGE_SNAPS[@]})); then
 	wait_for_snapd_ready
 
 	for snap_name in "${PURGE_SNAPS[@]}"; do

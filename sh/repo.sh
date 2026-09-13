@@ -19,6 +19,8 @@ install_key() {
 	rm -f "${tmp_key}" "${tmp_keyring}"
 }
 
+target_codename=$(. /etc/os-release; printf '%s' "${VERSION_CODENAME}")
+if [[ ${target_codename} == noble ]]; then
 install_key \
 	"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xB8DC7E53946656EFBCE4C1DD71DAEAAB4AD4CAB6" \
 	/etc/apt/keyrings/ondrej-php.gpg
@@ -29,6 +31,10 @@ Suites: noble
 Components: main
 Signed-By: /etc/apt/keyrings/ondrej-php.gpg
 EOF
+else
+    # Never mix Noble PHP packages into another Ubuntu release.
+    rm -f /etc/apt/sources.list.d/ondrej-ubuntu-php-noble.sources
+fi
 
 install_key \
 	https://acli.atlassian.com/gpg/public-key.asc \

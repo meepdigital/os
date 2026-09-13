@@ -1,8 +1,61 @@
 # meepdigital/os
 
-`meepdigital/os` is a persistent Ubuntu Cinnamon remix builder. It uses the scripts in this repository to create a bootable USB stick based on the latest Ubuntu Cinnamon desktop ISO, then installs this repo's custom package set into the USB's persistent overlay.
+`meepdigital/os` is an Ubuntu Meep remix builder. It creates a bootable USB
+whose live filesystem, persistent layer, and future installer all use the same
+customized Ubuntu Meep system rather than treating the original Ubuntu
+Cinnamon ISO as the install source.
 
-The main entry point is [`persist.sh`](./persist.sh). It writes the ISO to a USB disk, creates an ext4 persistence partition labeled `writable`, copies this repo into `/home/casper/os`, and runs [`os.sh`](./os.sh) inside the persistent live system.
+The main entry point is [`persist.sh`](./persist.sh). It builds the customized
+filesystem and its matching kernel/initramfs before writing a USB disk, then
+creates an ext4 persistence partition labeled `writable`.
+
+## Work on the VM disk at /meep
+
+The development VM is `Ubuntu Meep`, stored in `~/vm/Ubuntu Meep/`. Its
+`meep.vdi` is the hard drive; `/meep` is the host mount of that drive's root
+partition. Only mount it with the VM fully powered off. The VM has 2 CPUs,
+3,904 MiB RAM, VBoxSVGA with 128 MiB video memory and 3D disabled, and a
+60 GiB dynamically allocated SATA SSD disk.
+The display setting avoids the VMSVGA channel failures observed with this
+host's VirtualBox 7.0.16 and the image's Linux 7.0 kernel.
+
+From this repository, initialize the new VM disk from the saved customized
+root, repair its boot files, and leave it mounted at `/meep`:
+
+```bash
+sudo bash ./vm.sh prepare
+sudo bash ./vm.sh chroot
+```
+
+Inside the chroot, run `bash /home/casper/os/os.sh --boot-only` to replace and
+verify boot graphics, or `bash /home/casper/os/os.sh` for full provisioning.
+Exit the shell, then unmount and start the VM:
+
+```bash
+sudo bash ./vm.sh unmount
+bash ./vm.sh start
+```
+
+After shutting down the VM, `sudo bash ./vm.sh mount` makes the same system
+available at `/meep` again. Changes to the installed VM filesystem persist
+normally. `prepare` enables desktop autologin for the local `casper` user;
+set its password inside the chroot with `passwd casper` if needed.
+
+Export the mounted OS to a live ISO without writing a USB:
+
+```bash
+sudo bash ./persist.sh --root /meep --build-only \
+  --iso ./ubuntucinnamon-26.04.1-desktop-amd64.iso
+```
+
+To export and write it, replace `--build-only` with the intended whole USB
+device, such as `/dev/sdX`. The source ISO supplies the bootloader structure;
+the OS, kernel, initramfs, and graphics come from the customized root.
+
+`vm.sh` requires VirtualBox, qemu-nbd, gdisk, dosfstools, e2fsprogs, and rsync
+on the host. Creating `/meep`, partitioning the new VDI, and mounting it need
+root privileges. The prepared disk must be boot-tested before being treated
+as working.
 
 > **Warning:** `persist.sh` is a destructive disk-imaging tool. Verify the
 > target with `lsblk` every time. Never substitute a partition for the whole
@@ -39,24 +92,61 @@ sudo bash ./persist.sh /dev/sdX
 
 `persist.sh` is destructive. It will erase the target disk after asking you to type the selected device path again.
 
+Build commands run synchronously and show their normal output. An installer
+failure stops the build before writing a device. Plymouth graphics and the
+matching initramfs are refreshed by `sh/plymouth.sh` during the normal build;
+the completed filesystem is then exported.
+
+To rebuild and rewrite the inspected USB with the current Plymouth graphics:
+
+```bash
+sudo bash ./tmp.sh
+```
+
+This temporary command is restricted to `/dev/sde` and serial `618BB4EB`, then
+delegates to `persist.sh`. It is destructive: close files open on the USB and
+confirm the device path when prompted.
+
 To rerun only the persistent overlay install work on an already-created USB:
 
 ```bash
 sudo bash ./persist.sh /dev/sdX --resume
 ```
 
-New USBs contain two live boot modes:
+New USBs contain these boot modes:
 
 - **Ubuntu Meep - Persistent Live** keeps durable changes on the USB and uses
   RAM-backed `/tmp` and APT cache plus compressed RAM swap when booted.
 - **Ubuntu Meep - Fast RAM Live** adds `toram`, copying the read-only live OS
-  into RAM while retaining the persistent layer and the graphical installer.
+  into RAM while retaining the persistent layer. It needs enough RAM for the
+  entire image plus the desktop; the current roughly 8 GiB squashfs does not
+  fit in this VM's 3.8 GiB RAM. Use Persistent Live for this VM.
+- **Ubuntu Meep - Install Current System** starts the future custom installer,
+  whose source will be the current merged live system, including persistent
+  edits.
 
-Both modes can still launch the normal Ubuntu installer and install to a
-separate internal disk with ordinary mounts. The performance design is
-installed by `sh/design.sh` from `os.sh`; it does not put `/usr`, the package
-database, or user data in tmpfs. Rebuild an older USB in create mode to replace
-its immutable ISO boot menu; `--resume` only reruns the persistent overlay work.
+There is no Ubuntu Cinnamon, Ubiquity, Subiquity, or Ubuntu Desktop Installer
+install path. The custom Node.js installer lives in [`install/`](./install/)
+and is intentionally not implemented yet. The performance design is installed
+by `sh/design.sh` from `os.sh`; it does not put `/usr`, the package database,
+or user data in tmpfs. Rebuild an older USB in create mode to replace its
+immutable ISO boot menu; `--resume` only reruns the persistent overlay work.
+It cannot repair the immutable kernel, initramfs, or splash graphics; export
+and rewrite the image to update those.
+
+## Boot verification
+
+`sh/boot.sh` registers Meep through `update-alternatives`, installs the supplied
+PNG/SVG graphics, and explicitly generates an initramfs for every installed
+kernel. Verification extracts each image and compares all graphics and the
+selected theme. `persist.sh` exports the matching boot pair and Casper media
+UUID, retains essential runtime mount directories, updates checksums, and
+reads boot files back from the resulting ISO.
+
+Run `bash tests/boot-artifacts.sh` for unprivileged regression checks. These
+checks verify artifact rejection, not a successful OS boot. Final acceptance
+requires a desktop boot and a marker file surviving a shutdown/reboot, both
+for the installed VM disk and for the live USB's persistence partition.
 
 ### Included APT Packages
 

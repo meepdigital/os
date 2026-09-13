@@ -95,7 +95,7 @@ if command -v systemctl >/dev/null 2>&1; then
 	systemctl enable meep-zram.service tmp.mount var-cache-apt-archives.mount || true
 	# In a live chroot there is normally no systemd PID 1. Enabling is still
 	# useful; starting is attempted only when a real system manager is present.
-	if [[ -d /run/systemd/system ]]; then
+	if [[ ${MEEP_CHROOT:-0} != 1 && -d /run/systemd/system ]]; then
 		systemctl start meep-zram.service tmp.mount var-cache-apt-archives.mount || true
 	fi
 fi
@@ -105,7 +105,8 @@ cat >/etc/ubuntu-meep/performance.conf <<'EOF'
 # Ubuntu Meep performance profile
 # Persistent Live: durable OverlayFS writes, disposable caches, zram enabled.
 # Fast RAM Live: adds casper's toram boot option; durable writes still use the
-# persistence partition so the normal installer remains available.
+# persistence partition so the custom Ubuntu Meep installer can consume the
+# current merged live system.
 EOF
 
 echo "Ubuntu Meep performance design installed (tmpfs caches + zram)."

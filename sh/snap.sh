@@ -2,6 +2,10 @@
 
 # Install the requested desktop and tooling snaps during the main run. Existing
 # installs are refreshed so the managed set lands on current revisions.
+if [[ ${MEEP_CHROOT:-0} == 1 ]]; then
+	echo "Snap installation needs a running target; persist.sh completes it in a VM before export."
+	return 0
+fi
 DIRECT_SNAPS=(
 	plex-desktop
 	spotify

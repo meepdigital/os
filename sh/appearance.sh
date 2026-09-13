@@ -13,7 +13,7 @@ fi
 
 install -d -m 0755 "${BACKGROUND_DIR}"
 echo "Installing ${BACKGROUND_SOURCE} as ${BACKGROUND_PATH}..."
-mv -f "${BACKGROUND_SOURCE}" "${BACKGROUND_PATH}"
+install -m 0644 "${BACKGROUND_SOURCE}" "${BACKGROUND_PATH}"
 chmod 0644 "${BACKGROUND_PATH}"
 
 # Provisioning runs outside a user's graphical session, so install a dconf

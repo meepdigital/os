@@ -46,15 +46,26 @@ PHP_MODULES=(
 	zip
 )
 
-PHP_PACKAGES=(
-	php8.4
-)
+target_codename=$(. /etc/os-release; printf '%s' "${VERSION_CODENAME}")
+php_prefix=php
+[[ ${target_codename} != noble ]] || php_prefix=php8.4
+apt-get install -y "${php_prefix}" "${php_prefix}-cli" "${php_prefix}-fpm"
+PHP_PACKAGES=()
+for module in "${PHP_MODULES[@]}"; do
+    package="${php_prefix}-${module}"
+    # Read the complete apt-cache output; exiting awk early can SIGPIPE
+    # apt-cache under the repository's pipefail setting (status 141).
+    candidate=$(apt-cache policy "${package}" | awk '/Candidate:/ && !seen {print $2; seen=1}')
+    if [[ -n ${candidate} && ${candidate} != '(none)' ]]; then
+        PHP_PACKAGES+=("${package}")
+    else
+        echo "Optional PHP module unavailable on ${target_codename}: ${package}"
+    fi
+done
+((${#PHP_PACKAGES[@]} == 0)) || apt-get install -y "${PHP_PACKAGES[@]}"
 
-PHP_PACKAGES+=("${PHP_MODULES[@]/#/php8.4-}")
-
-apt-get install -y "${PHP_PACKAGES[@]}"
-
-a2enconf php8.4-fpm
+php_version=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+a2enconf "php${php_version}-fpm"
 a2enmod proxy_fcgi setenvif
 
 # composer
@@ -96,7 +107,10 @@ export COMPOSER_ALLOW_SUPERUSER=1
 export PATH="${COMPOSER_GLOBAL_BIN}:${PATH}"
 
 # symfony
-curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' | bash
+symfony_setup=$(mktemp)
+curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' -o "${symfony_setup}"
+bash "${symfony_setup}"
+rm -f "${symfony_setup}"
 apt-get update
 apt-get install -y symfony-cli
 
