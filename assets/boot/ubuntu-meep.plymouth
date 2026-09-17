@@ -10,31 +10,31 @@ ImageDir=/usr/share/plymouth/themes/ubuntu-meep
 DialogHorizontalAlignment=.5
 DialogVerticalAlignment=.7
 TitleHorizontalAlignment=.5
-TitleVerticalAlignment=.382
+TitleVerticalAlignment=.5
 HorizontalAlignment=.5
-VerticalAlignment=.7
+VerticalAlignment=.5
 WatermarkHorizontalAlignment=.5
-WatermarkVerticalAlignment=.96
+WatermarkVerticalAlignment=.5
 Transition=none
 TransitionDuration=0.0
 BackgroundStartColor=0x000000
 BackgroundEndColor=0x000000
 ProgressBarBackgroundColor=0x606060
 ProgressBarForegroundColor=0xffffff
-DialogClearsFirmwareBackground=false
+DialogClearsFirmwareBackground=true
 MessageBelowAnimation=true
 
 [boot-up]
 UseEndAnimation=true
-UseFirmwareBackground=true
+UseFirmwareBackground=false
 
 [shutdown]
 UseEndAnimation=true
-UseFirmwareBackground=true
+UseFirmwareBackground=false
 
 [reboot]
 UseEndAnimation=true
-UseFirmwareBackground=true
+UseFirmwareBackground=false
 
 [updates]
 SuppressMessages=true

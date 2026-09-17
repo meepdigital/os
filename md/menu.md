@@ -66,7 +66,7 @@ This is the visible launcher inventory for the current Ubuntu Cinnamon desktop: 
 
 ## Meep-managed desktop applications
 
-These are installed directly or indirectly by the repository scripts, except where the package is listed in `sh/purge.sh`.
+These are installed directly or indirectly by the repository scripts, except where the package is listed in `sh/_meep/purge.sh`.
 
 - Install Ubuntu Meep
 - Google Chrome
@@ -124,5 +124,4 @@ These are installed directly or indirectly by the repository scripts, except whe
 
 ## Exclusions
 
-`sh/purge.sh` explicitly removes Gedit, Pidgin, HexChat, Alacritty, Aisleriot, GNOME games, Brasero, Gnote, Rhythmbox, Sound Juicer, Thunderbird, Totem, Firefox, and the Firefox/Thunderbird snaps. They are therefore not counted as Meep-enabled menu items even if a stale desktop file remains on a development workstation.
-
+`sh/_meep/purge.sh` explicitly removes Gedit, Pidgin, HexChat, Alacritty, Aisleriot, GNOME games, Brasero, Gnote, Rhythmbox, Sound Juicer, Thunderbird, Totem, Firefox, and the Firefox/Thunderbird snaps. They are therefore not counted as Meep-enabled menu items even if a stale desktop file remains on a development workstation.

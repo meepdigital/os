@@ -18,7 +18,7 @@ This is the visible launcher inventory for the current Ubuntu Cinnamon desktop: 
 
 ## Meep-managed desktop applications
 
-These are installed directly or indirectly by the repository scripts, except where the package is listed in `sh/purge.sh`.
+These are installed directly or indirectly by the repository scripts, except where the package is listed in `sh/_meep/purge.sh`.
 
 - Install Ubuntu Meep
 - Google Chrome

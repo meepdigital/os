@@ -1,0 +1,78 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [[ "${EUID}" -ne 0 ]]; then
+	exec sudo -- "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+SH_DIR="${SCRIPT_DIR}/sh/_meep"
+
+# Minimal still builds the Meep desktop and its installer, but omits the
+# optional repositories, application stacks, databases, language toolchains,
+# and snap bundle.  npm.sh has its own minimal path because boot.sh needs the
+# local Electron runtime produced by the installer build.
+MINIMAL_PARTS=(repo spotify teams php go snap mysql purge appearance go menu panel)
+MINIMAL=0
+BOOT_ONLY=0
+for arg in "$@"; do
+	case ${arg} in
+		--minimal) MINIMAL=1 ;;
+		--boot-only) BOOT_ONLY=1 ;;
+		*) echo "Usage: ./sh/meep [--minimal] [--boot-only]" >&2; exit 1 ;;
+	esac
+done
+
+# Keep the mode visible to sourced parts as well as to callers that invoke one
+# of those parts directly.  The source_part dispatcher is the normal skip
+# path; individual optional parts also enforce this contract defensively.
+export MEEP_MINIMAL="${MINIMAL}"
+
+if ((BOOT_ONLY)); then
+	# shellcheck source=/dev/null
+	. "${SH_DIR}/boot.sh"
+	exit 0
+fi
+
+export MEEP_CHROOT=${MEEP_CHROOT:-0}
+if systemd-detect-virt --chroot --quiet; then
+    export MEEP_CHROOT=1
+fi
+
+source_part() {
+	local name="$1"
+	local path="${SH_DIR}/${name}.sh"
+	local minimal_part
+
+	if ((MINIMAL)); then
+		for minimal_part in "${MINIMAL_PARTS[@]}"; do
+			if [[ ${name} == "${minimal_part}" ]]; then
+				echo "Skipping ${name} in minimal mode."
+				return 0
+			fi
+		done
+	fi
+
+	# shellcheck source=/dev/null
+	. "${path}"
+}
+
+source_part setup
+source_part base
+source_part repo
+source_part core
+source_part spotify
+source_part teams
+source_part go
+source_part firewall
+source_part php
+source_part mysql
+source_part npm
+source_part purge
+source_part boot
+source_part appearance
+source_part design
+source_part snap
+source_part menu
+source_part panel

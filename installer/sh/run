@@ -47,7 +47,7 @@ if [[ -z ${electron_bin} ]]; then
     electron_bin="$(command -v electron || true)"
 fi
 if [[ -z ${electron_bin} || ! -x ${electron_bin} ]]; then
-    echo "Electron is not installed on PATH; run sh/npm.sh before launching the installer." >&2
+    echo "Electron is not installed on PATH; run sh/_meep/npm.sh before launching the installer." >&2
     exit 1
 fi
 

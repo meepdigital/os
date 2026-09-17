@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${EUID}" -ne 0 ]]; then
+  exec sudo -- "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+OS_SRC="${SCRIPT_DIR}"
+DEB_SRC="${SCRIPT_DIR}/deb"
+WORK_ROOT="${SCRIPT_DIR}/tmp"
+WORK="${WORK_ROOT}/ubuntu-cinnamon-usb-build"
+DOWNLOAD_PAGE_URL="https://ubuntucinnamon.org/download/"
+ENTRYPOINT_NAME="$(basename "$0")"
+ISO=""
+CUSTOM_ISO=""
+CUSTOM_SQUASHFS=""
+DEVICE=""
+ISO_PART=""
+PERSIST_PART=""
+MODE="create"
+CHROOT_INSTALL_SUCCEEDED=0
+BUILD_ONLY=0
+ROOT_SOURCE=""
+OS_MINIMAL=0
+
+PERSIST_HELPER_DIR="${SCRIPT_DIR}/sh/_persist"
+source_persist_part() {
+  local name="$1"
+  local path="${PERSIST_HELPER_DIR}/${name}.sh"
+  [[ -r ${path} ]] || { echo "Missing persist helper: ${path}" >&2; exit 1; }
+  # shellcheck source=/dev/null
+  . "${path}"
+}
+
+for helper in \
+  00-preflight \
+  01-device \
+  02-partitions \
+  03-cleanup \
+  04-required \
+  05-confirm \
+  06-source \
+  07-grub \
+  08-overlay \
+  09-copy-source \
+  10-chroot-mounts \
+  11-firstboot \
+  12-provision \
+  14-branding \
+  15-materialize \
+  16-build-iso \
+  17-write-or-resume \
+  18-verify 19-report; \
+do \
+  source_persist_part "${helper}"
+done
+
+while (($#)); do
+  case "$1" in
+    --root)
+      shift
+      ROOT_SOURCE="$(realpath "${1:?--root needs a mounted OS root}")"
+      [[ ${ROOT_SOURCE} != / && -f ${ROOT_SOURCE}/etc/os-release ]] || { echo "Invalid OS root" >&2; exit 1; }
+      ;;
+    --build-only)
+      BUILD_ONLY=1
+      ;;
+    --iso)
+      shift
+      ISO="$(realpath "${1:?--iso needs an existing source ISO}")"
+      [[ -f ${ISO} ]] || { echo "Missing ISO: ${ISO}" >&2; exit 1; }
+      ;;
+    --resume)
+      MODE="resume"
+      WORK="${WORK_ROOT}/ubuntu-cinnamon-usb-resume"
+      ;;
+    --minimal)
+      OS_MINIMAL=1
+      ;;
+    --device)
+      shift
+      if [[ $# -eq 0 || -z "${1:-}" ]]; then
+        echo "--device requires a block device path, for example /dev/sdd" >&2
+        exit 1
+      fi
+      DEVICE="$1"
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    /dev/*)
+      if [[ -n "${DEVICE}" ]]; then
+        echo "Device was already set to ${DEVICE}; got another device argument: $1" >&2
+        exit 1
+      fi
+      DEVICE="$1"
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+cleanup_mounts=()
+cleanup_loops=()
+trap cleanup EXIT
+
+persist_phase_00_preflight
+persist_phase_01_device
+persist_phase_02_partitions
+persist_phase_03_cleanup
+persist_phase_04_required
+persist_phase_05_confirm
+persist_phase_06_source
+persist_phase_07_grub
+persist_phase_08_overlay
+persist_phase_09_copy_source
+persist_phase_10_chroot_mounts
+persist_phase_11_firstboot
+persist_phase_12_provision
+persist_phase_14_branding
+persist_phase_15_materialize
+persist_phase_16_build_iso
+persist_phase_17_write_or_resume
+persist_phase_18_verify
+persist_phase_19_report

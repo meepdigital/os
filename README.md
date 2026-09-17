@@ -5,7 +5,7 @@ whose live filesystem, persistent layer, and future installer all use the same
 customized Ubuntu Meep system rather than treating the original Ubuntu
 Cinnamon ISO as the install source.
 
-The main entry point is [`persist.sh`](./persist.sh). It builds the customized
+The main entry point is [`sh/persist`](./sh/persist). It builds the customized
 filesystem and its matching kernel/initramfs before writing a USB disk, then
 creates an ext4 persistence partition labeled `writable`.
 
@@ -27,8 +27,8 @@ sudo bash ./vm.sh prepare
 sudo bash ./vm.sh chroot
 ```
 
-Inside the chroot, run `bash /home/casper/os/os.sh --boot-only` to replace and
-verify boot graphics, or `bash /home/casper/os/os.sh` for full provisioning.
+Inside the chroot, run `/home/casper/os/sh/meep --boot-only` to replace and
+verify boot graphics, or `/home/casper/os/sh/meep` for full provisioning.
 Exit the shell, then unmount and start the VM:
 
 ```bash
@@ -44,7 +44,7 @@ set its password inside the chroot with `passwd casper` if needed.
 Export the mounted OS to a live ISO without writing a USB:
 
 ```bash
-sudo bash ./persist.sh --root /meep --build-only \
+./sh/persist --root /meep --build-only \
   --iso ./ubuntucinnamon-26.04.1-desktop-amd64.iso
 ```
 
@@ -57,19 +57,22 @@ on the host. Creating `/meep`, partitioning the new VDI, and mounting it need
 root privileges. The prepared disk must be boot-tested before being treated
 as working.
 
-> **Warning:** `persist.sh` is a destructive disk-imaging tool. Verify the
+> **Warning:** `sh/persist` is a destructive disk-imaging tool. Verify the
 > target with `lsblk` every time. Never substitute a partition for the whole
 > USB device, and never run it against a disk containing data you need.
 
 ## Choose an operation
 
-- Build a new persistent USB: `sudo bash ./persist.sh /dev/sdX`
+- Build a new persistent USB: `./sh/persist /dev/sdX`
+- Build a new persistent USB with the optional package groups skipped:
+  `./sh/persist /dev/sdX --minimal`
 - Rerun the software installation on an existing build:
-  `sudo bash ./persist.sh /dev/sdX --resume`
+  `./sh/persist /dev/sdX --resume`
 - Install the package set directly in the current Ubuntu Cinnamon system:
-  `sudo bash ./os.sh`
+  `./sh/meep`
 
-`os.sh` must run as root and sources the ordered modules in `sh/`. The `sh/`
+`sh/meep` self-elevates through `sudo` and sources the ordered modules in
+`sh/_meep/`. The `sh/_meep/` directory
 directory is the source of truth for installed, configured, and removed tools;
 the package lists below are a readable summary of that configuration.
 
@@ -87,14 +90,14 @@ Create the persistent Ubuntu Cinnamon USB:
 ```bash
 git clone https://github.com/meepdigital/os
 cd os
-sudo bash ./persist.sh /dev/sdX
+./sh/persist /dev/sdX
 ```
 
-`persist.sh` is destructive. It will erase the target disk after asking you to type the selected device path again.
+`sh/persist` is destructive. It will erase the target disk after asking you to type the selected device path again.
 
 Build commands run synchronously and show their normal output. An installer
 failure stops the build before writing a device. Plymouth graphics and the
-matching initramfs are refreshed by `sh/plymouth.sh` during the normal build;
+matching initramfs are refreshed by `sh/_meep/plymouth.sh` during the normal build;
 the completed filesystem is then exported.
 
 To rebuild and rewrite the inspected USB with the current Plymouth graphics:
@@ -104,31 +107,27 @@ sudo bash ./tmp.sh
 ```
 
 This temporary command is restricted to `/dev/sde` and serial `618BB4EB`, then
-delegates to `persist.sh`. It is destructive: close files open on the USB and
+delegates to `sh/persist`. It is destructive: close files open on the USB and
 confirm the device path when prompted.
 
 To rerun only the persistent overlay install work on an already-created USB:
 
 ```bash
-sudo bash ./persist.sh /dev/sdX --resume
+./sh/persist /dev/sdX --resume
 ```
 
-New USBs contain these boot modes:
+New USBs contain one automatic boot path:
 
-- **Ubuntu Meep - Persistent Live** keeps durable changes on the USB and uses
-  RAM-backed `/tmp` and APT cache plus compressed RAM swap when booted.
-- **Ubuntu Meep - Fast RAM Live** adds `toram`, copying the read-only live OS
-  into RAM while retaining the persistent layer. It needs enough RAM for the
-  entire image plus the desktop; the current roughly 8 GiB squashfs does not
-  fit in this VM's 3.8 GiB RAM. Use Persistent Live for this VM.
-- **Install Ubuntu Meep** starts the custom Electron installer, whose eventual
-  source will be the current merged live system, including persistent edits.
+- **Ubuntu Meep** boots the customized merged filesystem through Casper with
+  the `writable` persistence partition. The same persistent desktop contains
+  the custom Electron installer, so installation is available from the live
+  session without a second GRUB choice.
 
 There is no Ubuntu Cinnamon, Ubiquity, Subiquity, or Ubuntu Desktop Installer
 install path. The custom Electron installer lives in [`installer/`](./installer/)
 and its disk-writing backend is intentionally gated while the first pages are
 being tested. The performance design is installed
-by `sh/design.sh` from `os.sh`; it does not put `/usr`, the package database,
+by `sh/_meep/design.sh` from `sh/meep`; it does not put `/usr`, the package database,
 or user data in tmpfs. Rebuild an older USB in create mode to replace its
 immutable ISO boot menu; `--resume` only reruns the persistent overlay work.
 It cannot repair the immutable kernel, initramfs, or splash graphics; export
@@ -136,10 +135,10 @@ and rewrite the image to update those.
 
 ## Boot verification
 
-`sh/boot.sh` registers Meep through `update-alternatives`, installs the supplied
+`sh/_meep/boot.sh` registers Meep through `update-alternatives`, installs the supplied
 PNG/SVG graphics, and explicitly generates an initramfs for every installed
 kernel. Verification extracts each image and compares all graphics and the
-selected theme. `persist.sh` exports the matching boot pair and Casper media
+selected theme. `sh/persist` exports the matching boot pair and Casper media
 UUID, retains essential runtime mount directories, updates checksums, and
 reads boot files back from the resulting ISO.
 
