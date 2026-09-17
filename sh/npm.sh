@@ -34,3 +34,8 @@ npm install -g \
 	heroku \
 	nodemon \
 	yo
+
+cd "${SCRIPT_DIR}/installer"
+npm install
+npm run build
+npm run desktop

@@ -33,10 +33,13 @@ CORE_PACKAGES=(
 	python3-pip
 	qemu-system
 	rake
+	rclone
+	gvfs-backends
 	ruby-full
 	rustup
 	redshift-gtk
 	google-chrome-stable
+	sass
 	simplescreenrecorder
 	sublime-text
 	virtualbox
@@ -49,3 +52,14 @@ ZOOM_DEB=/tmp/zoom_amd64.deb
 curl -fsSL https://zoom.us/client/latest/zoom_amd64.deb -o "${ZOOM_DEB}"
 apt-get install -y "${ZOOM_DEB}"
 rm -f "${ZOOM_DEB}"
+
+SLACK_DEB=/tmp/zoom_amd64.deb
+curl -fsSL "https://slack.com/downloads/instructions/linux?ddl=1&build=deb" -o "${SLACK_DEB}"
+apt-get install -y "${SLACK_DEB}"
+rm -f "${SLACK_DEB}"
+
+DISCORD_DEB=/tmp/discord_amd64.deb
+curl -fsSL "https://discord.com/api/download?platform=linux&format=deb" -o "${DISCORD_DEB}"
+apt-get install -y "${DISCORD_DEB}"
+rm -f "${DISCORD_DEB}"
+

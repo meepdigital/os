@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+    echo "Install Ubuntu Meep must be run as root." >&2
+    exit 1
+fi
+
+# sudo and pkexec do not always preserve the desktop user's X11 cookie.
+desktop_user="${SUDO_USER:-}"
+if [[ -n ${desktop_user} ]]; then
+    desktop_home="$(getent passwd "${desktop_user}" | cut -d: -f6)"
+else
+    desktop_home=""
+fi
+
+export DISPLAY="${DISPLAY:-:0}"
+if [[ -n ${desktop_home} && -r ${desktop_home}/.Xauthority ]]; then
+    export XAUTHORITY="${desktop_home}/.Xauthority"
+fi
+
+revoke_root_x_access() {
+    if [[ ${EUID} -eq 0 && -n ${desktop_user} ]] && command -v sudo >/dev/null 2>&1; then
+        sudo -u "${desktop_user}" env DISPLAY="${DISPLAY}" XAUTHORITY="${desktop_home}/.Xauthority" xhost -SI:localuser:root >/dev/null 2>&1 || true
+    fi
+}
+
+if [[ ${EUID} -eq 0 && -n ${desktop_user} ]] && command -v sudo >/dev/null 2>&1 && command -v xhost >/dev/null 2>&1; then
+    sudo -u "${desktop_user}" env DISPLAY="${DISPLAY}" XAUTHORITY="${desktop_home}/.Xauthority" xhost +SI:localuser:root >/dev/null
+    trap revoke_root_x_access EXIT INT TERM
+fi
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f ${script_dir}/dist/main.js ]]; then
+    installer_dir="${script_dir}"
+else
+    installer_dir="$(cd -- "${script_dir}/.." && pwd)"
+fi
+electron_bin="${ELECTRON_BIN:-}"
+if [[ -z ${electron_bin} && -x ${installer_dir}/electron-dist/electron ]]; then
+    electron_bin="${installer_dir}/electron-dist/electron"
+fi
+if [[ -z ${electron_bin} && -x ${installer_dir}/node_modules/electron/dist/electron ]]; then
+    electron_bin="${installer_dir}/node_modules/electron/dist/electron"
+fi
+if [[ -z ${electron_bin} ]]; then
+    electron_bin="$(command -v electron || true)"
+fi
+if [[ -z ${electron_bin} || ! -x ${electron_bin} ]]; then
+    echo "Electron is not installed on PATH; run sh/npm.sh before launching the installer." >&2
+    exit 1
+fi
+
+"${electron_bin}" \
+    --no-sandbox \
+    --disable-gpu \
+    --disable-gpu-compositing \
+    "${installer_dir}/dist/main.js" "$@"
+status=$?
+revoke_root_x_access
+exit "${status}"

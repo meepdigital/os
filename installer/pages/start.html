@@ -1,0 +1,21 @@
+<section class="welcome-page p-4 p-lg-5">
+  <div class="row g-4 g-lg-5 align-items-center h-100">
+    <div class="col-12 col-md-4 welcome-image-col">
+      <img class="hero-logo img-fluid" src="installer.png" alt="Meep logo">
+    </div>
+    <div class="col-12 col-md-8 welcome-text-col">
+      <div ng-bind-html="vm.state.lang.start.html"></div>
+      <hr class="my-4">
+      <h2 class="h3 mb-2" ng-bind="vm.state.lang.start.chooseLanguage"></h2>
+      <p class="muted mb-4" ng-bind="vm.state.lang.start.languageDescription"></p>
+      <label class="form-label" for="language" ng-bind="vm.state.lang.start.languageLabel"></label>
+      <select id="language" class="form-select form-select-lg" ng-model="vm.state.language" ng-change="vm.changeLanguage()">
+        <option value="en-us" ng-bind="vm.state.lang.start.englishUnitedStates"></option>
+        <option value="en-gb" ng-bind="vm.state.lang.start.englishUnitedKingdom"></option>
+        <option value="es-es" ng-bind="vm.state.lang.start.spanish"></option>
+        <option value="fr-fr" ng-bind="vm.state.lang.start.french"></option>
+        <option value="de-de" ng-bind="vm.state.lang.start.german"></option>
+      </select>
+    </div>
+  </div>
+</section>

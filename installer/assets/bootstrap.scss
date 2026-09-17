@@ -1,0 +1,39 @@
+$body-bg: #202225;
+$body-color: #f4f5f7;
+$primary: #d95d39;
+$secondary: #4f5663;
+$dark: #17191c;
+$border-radius: 0.7rem;
+$font-family-sans-serif: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+@import "./bootstrap/bootstrap";
+
+html, body { height: 100%; }
+body { overflow: hidden; }
+.installer-shell { height: 100vh; display: flex; flex-direction: column; }
+.installer-header { background: $dark; border-bottom: 1px solid rgba(255,255,255,.12); }
+.installer-header .btn { white-space: nowrap; }
+.installer-main { flex: 1; overflow: auto; padding-bottom: 100px !important; background: $body-bg; }
+.page-transition, .welcome-page, .welcome-text-col { background: transparent; }
+.welcome-active .installer-main { overflow: hidden; }
+.brand-mark { width: 42px; height: 42px; object-fit: contain; }
+.welcome-page { width: 100%; height: 100%; overflow: hidden; }
+.welcome-page > .row { min-height: 100%; }
+.welcome-image-col { display: flex; align-items: center; justify-content: center; min-height: 360px; }
+.welcome-text-col { min-height: 0; overflow-y: auto; max-height: 100%; padding-right: 1.25rem; }
+.hero-logo { display: block; width: 100%; max-width: 640px; max-height: 70vh; height: auto; object-fit: contain; image-rendering: auto; }
+.muted { color: #b6bbc4; }
+.device-table { font-size: .9rem; }
+.device-table code { color: #ffb38f; }
+.disk-option { cursor: pointer; }
+.footer-bar { position: fixed; z-index: 10; right: 0; bottom: 0; left: 0; background: $dark; border-top: 1px solid rgba(255,255,255,.12); }
+.step-pill { color: #c4c9d2; font-size: .85rem; }
+.page-transition { position: relative; }
+.page-transition { opacity: 1; transition: opacity .25s ease-in-out; will-change: opacity; }
+.page-transition.fade-out, .page-transition.fade-in { opacity: 0; }
+
+@media (max-width: 767.98px) {
+  .welcome-active .installer-main { overflow: auto; }
+  .welcome-page { height: auto; min-height: 100%; overflow: visible; }
+  .welcome-text-col { max-height: none; overflow: visible; }
+}

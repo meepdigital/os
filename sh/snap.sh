@@ -8,17 +8,15 @@ if [[ ${MEEP_CHROOT:-0} == 1 ]]; then
 fi
 DIRECT_SNAPS=(
 	plex-desktop
-	spotify
-	teams-for-linux
 	mc-installer
 	snap-store
-	trello-cli
 	canonical-livepatch
 )
 
 CLASSIC_SNAPS=(
 	flutter
 	blender
+	android-studio
 )
 
 wait_for_snapd_ready

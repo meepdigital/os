@@ -121,13 +121,13 @@ New USBs contain these boot modes:
   into RAM while retaining the persistent layer. It needs enough RAM for the
   entire image plus the desktop; the current roughly 8 GiB squashfs does not
   fit in this VM's 3.8 GiB RAM. Use Persistent Live for this VM.
-- **Ubuntu Meep - Install Current System** starts the future custom installer,
-  whose source will be the current merged live system, including persistent
-  edits.
+- **Install Ubuntu Meep** starts the custom Electron installer, whose eventual
+  source will be the current merged live system, including persistent edits.
 
 There is no Ubuntu Cinnamon, Ubiquity, Subiquity, or Ubuntu Desktop Installer
-install path. The custom Node.js installer lives in [`install/`](./install/)
-and is intentionally not implemented yet. The performance design is installed
+install path. The custom Electron installer lives in [`installer/`](./installer/)
+and its disk-writing backend is intentionally gated while the first pages are
+being tested. The performance design is installed
 by `sh/design.sh` from `os.sh`; it does not put `/usr`, the package database,
 or user data in tmpfs. Rebuild an older USB in create mode to replace its
 immutable ISO boot menu; `--resume` only reruns the persistent overlay work.

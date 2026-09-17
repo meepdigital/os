@@ -35,6 +35,9 @@ source_part setup
 source_part base
 source_part repo
 source_part core
+source_part spotify
+source_part teams
+source_part go
 source_part firewall
 source_part php
 source_part mysql
@@ -44,3 +47,5 @@ source_part boot
 source_part appearance
 source_part design
 source_part snap
+source_part menu
+source_part panel

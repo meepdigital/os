@@ -1,0 +1,6 @@
+<section class="p-4 p-lg-5">
+  <h2 class="h3 mb-2" ng-bind="vm.state.lang.disks.heading"></h2>
+  <p class="muted mb-4" ng-bind="vm.state.lang.disks.description"></p>
+  <div class="list-group mb-4"><div class="list-group-item list-group-item-action disk-option d-flex justify-content-between align-items-center" ng-repeat="disk in vm.state.disks track by disk.path" ng-click="vm.selectDisk(disk)"><span>{{ disk.name }}</span><code>{{ disk.path }}</code></div><div class="list-group-item muted" ng-if="!vm.state.disks.length" ng-bind="vm.state.lang.disks.noDisks"></div></div>
+  <div class="alert alert-warning mt-4 mb-0" ng-bind="vm.state.lang.disks.warning"></div>
+</section>
