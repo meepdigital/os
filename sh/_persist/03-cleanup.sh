@@ -27,14 +27,14 @@ cleanup() {
   if [[ -f ${WORK}/meep-created-policy-rc.d ]]; then
     rm -f "${WORK}/root/usr/sbin/policy-rc.d"
   fi
-  cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-build"
-  cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-resume"
+  cleanup_existing_tree "${WORK_ROOT}/ubuntu-usb-build"
+  cleanup_existing_tree "${WORK_ROOT}/ubuntu-usb-resume"
 }
 
 persist_phase_03_cleanup() {
-  cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-build"
-  cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-build"
-  cleanup_existing_tree "${WORK_ROOT}/ubuntu-cinnamon-usb-resume"
+  cleanup_existing_tree "${WORK_ROOT}/ubuntu-usb-build"
+  cleanup_existing_tree "${WORK_ROOT}/ubuntu-usb-build"
+  cleanup_existing_tree "${WORK_ROOT}/ubuntu-usb-resume"
   rm -rf "${WORK}"
   mkdir -p "${WORK}"
 }

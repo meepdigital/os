@@ -16,8 +16,7 @@ menuentry "Ubuntu Meep" {
   initrd /casper/initrd
 }
 EOF
-  sed 's/Ubuntu-Cinnamon/Ubuntu-Meep/g; s/Ubuntu Cinnamon/Ubuntu Meep/g' \
-    "${WORK}/disk-info.orig" >"${WORK}/disk-info"
+  cp -- "${WORK}/disk-info.orig" "${WORK}/disk-info"
   [[ $(rg -c '^menuentry ' "${WORK}/grub.cfg") == 1 ]] || {
     echo "Single Ubuntu Meep grub entry was not generated" >&2
     exit 1

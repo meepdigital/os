@@ -2,8 +2,8 @@
 
 `meepdigital/os` is an Ubuntu Meep remix builder. It creates a bootable USB
 whose live filesystem, persistent layer, and future installer all use the same
-customized Ubuntu Meep system rather than treating the original Ubuntu
-Cinnamon ISO as the install source.
+customized Ubuntu Meep system rather than treating the original Ubuntu ISO as
+the install source.
 
 The main entry point is [`sh/persist`](./sh/persist). It builds the customized
 filesystem and its matching kernel/initramfs before writing a USB disk, then
@@ -45,7 +45,7 @@ Export the mounted OS to a live ISO without writing a USB:
 
 ```bash
 ./sh/persist --root /meep --build-only \
-  --iso ./ubuntucinnamon-26.04.1-desktop-amd64.iso
+  --iso ./ubuntu-26.04.1-desktop-amd64.iso
 ```
 
 To export and write it, replace `--build-only` with the intended whole USB

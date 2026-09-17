@@ -13,7 +13,20 @@ SH_DIR="${SCRIPT_DIR}/sh/_meep"
 # optional repositories, application stacks, databases, language toolchains,
 # and snap bundle.  npm.sh has its own minimal path because boot.sh needs the
 # local Electron runtime produced by the installer build.
-MINIMAL_PARTS=(repo spotify teams php go snap mysql purge appearance go menu panel)
+MINIMAL_IGNORE=(
+	repo
+	spotify
+	teams
+	php
+	go
+	snap
+	mysql
+	purge
+	appearance
+	go
+	firewall
+)
+
 MINIMAL=0
 BOOT_ONLY=0
 for arg in "$@"; do
@@ -46,7 +59,7 @@ source_part() {
 	local minimal_part
 
 	if ((MINIMAL)); then
-		for minimal_part in "${MINIMAL_PARTS[@]}"; do
+		for minimal_part in "${MINIMAL_IGNORE[@]}"; do
 			if [[ ${name} == "${minimal_part}" ]]; then
 				echo "Skipping ${name} in minimal mode."
 				return 0
@@ -74,5 +87,3 @@ source_part boot
 source_part appearance
 source_part design
 source_part snap
-source_part menu
-source_part panel

@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 OS_SRC="${SCRIPT_DIR}"
 DEB_SRC="${SCRIPT_DIR}/deb"
 WORK_ROOT="${SCRIPT_DIR}/tmp"
-WORK="${WORK_ROOT}/ubuntu-cinnamon-usb-build"
-DOWNLOAD_PAGE_URL="https://ubuntucinnamon.org/download/"
+WORK="${WORK_ROOT}/ubuntu-usb-build"
+DOWNLOAD_PAGE_URL="https://releases.ubuntu.com/"
 ENTRYPOINT_NAME="$(basename "$0")"
 ISO=""
 CUSTOM_ISO=""
@@ -73,7 +73,7 @@ while (($#)); do
       ;;
     --resume)
       MODE="resume"
-      WORK="${WORK_ROOT}/ubuntu-cinnamon-usb-resume"
+      WORK="${WORK_ROOT}/ubuntu-usb-resume"
       ;;
     --minimal)
       OS_MINIMAL=1

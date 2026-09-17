@@ -1,14 +1,15 @@
 resolve_latest_iso() {
-  local download_page release_url release_page iso_name iso_url sums_url expected_checksum
+  local download_page release_dir release_url release_page iso_name iso_url sums_url expected_checksum
 
-  echo "Resolving the latest Ubuntu Cinnamon ISO..."
+  echo "Resolving the latest Ubuntu desktop ISO..."
   download_page="$(curl -fsSL "${DOWNLOAD_PAGE_URL}")"
-  release_url="$(printf '%s' "${download_page}" | grep -Eom 1 'https://cdimage\.ubuntu\.com/ubuntucinnamon/releases/[^\"]+/release/?' || true)"
-  [[ -n "${release_url}" ]] || { echo "Could not find an Ubuntu Cinnamon release URL on ${DOWNLOAD_PAGE_URL}" >&2; exit 1; }
+  release_dir="$(printf '%s' "${download_page}" | grep -Eom 1 'href="([[:alnum:].-]+)/"' | sed -E 's/^href="//; s#/"$##' || true)"
+  [[ -n "${release_dir}" ]] || { echo "Could not find an Ubuntu release URL on ${DOWNLOAD_PAGE_URL}" >&2; exit 1; }
+  release_url="${DOWNLOAD_PAGE_URL%/}/${release_dir}/"
 
   release_page="$(curl -fsSL "${release_url}")"
-  iso_name="$(printf '%s' "${release_page}" | grep -Eom 1 'ubuntucinnamon-[0-9]+\.[0-9]+(\.[0-9]+)?-desktop-amd64\.iso' || true)"
-  [[ -n "${iso_name}" ]] || { echo "Could not find a desktop AMD64 ISO on ${release_url}" >&2; exit 1; }
+  iso_name="$(printf '%s' "${release_page}" | grep -Eom 1 'ubuntu-[0-9]+\.[0-9]+(\.[0-9]+)?-desktop-amd64\.iso' || true)"
+  [[ -n "${iso_name}" ]] || { echo "Could not find an Ubuntu desktop AMD64 ISO on ${release_url}" >&2; exit 1; }
 
   iso_url="${release_url%/}/${iso_name}"
   sums_url="${release_url%/}/SHA256SUMS"

@@ -67,7 +67,7 @@ NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
 install -d -m 0755 /etc/systemd/user /etc/systemd/system
-for service in ubuntu-cinnamon-installer.service ubuntu-desktop-installer.service \
+for service in ubuntu-desktop-installer.service \
     snap.ubuntu-desktop-bootstrap.subiquity-server.service; do
     ln -sfn /dev/null "/etc/systemd/user/${service}"
     ln -sfn /dev/null "/etc/systemd/system/${service}"
@@ -77,7 +77,7 @@ for desktop_dir in /usr/share/applications /etc/xdg/autostart; do
     while IFS= read -r -d '' installer_desktop; do
         rm -f "${installer_desktop}"
     done < <(find "${desktop_dir}" -maxdepth 1 -type f -name '*.desktop' -exec \
-        grep -IlZ -e ubuntu-cinnamon-installer -e ubuntu-desktop-installer {} +)
+        grep -IlZ -e ubuntu-desktop-installer {} +)
 done
 if [[ ${MEEP_LIVE_BUILD:-0} == 1 ]]; then
     echo "Meep graphics verified in /boot initramfs images; sh/persist will export this kernel/initramfs into the live ISO."
