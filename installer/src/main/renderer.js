@@ -16,6 +16,7 @@ app.controller('InstallerController', ['$scope', '$timeout', function InstallerC
     'pages/start.html',
     'pages/keyboard.html',
     'pages/disks.html',
+    'pages/drivers.html',
     'pages/review.html',
   ];
   vm.state = {
@@ -24,6 +25,7 @@ app.controller('InstallerController', ['$scope', '$timeout', function InstallerC
     keyboard: 'us',
     lang: {},
     disks: [],
+    drivers: { loading: false, packages: [], installedDriverPackages: [], kernelModules: [], hardware: null, errors: [] },
     selectedDisk: '',
   };
   vm.pageTemplate = vm.pages[vm.state.page];
@@ -91,7 +93,12 @@ app.controller('InstallerController', ['$scope', '$timeout', function InstallerC
   };
 
   vm.templateLoaded = () => {
-    if (vm.state.page === 2) vm.loadDisks();
+    if (vm.state.page === 2) {
+      vm.loadDisks();
+    }
+    if (vm.state.page === 3) {
+      vm.loadDrivers();
+    }
   };
 
   vm.loadDisks = async () => {
@@ -100,6 +107,24 @@ app.controller('InstallerController', ['$scope', '$timeout', function InstallerC
     } catch (error) {
       vm.state.disks = [{ name: 'Unavailable', path: error.message }];
     }
+    $scope.$evalAsync();
+  };
+
+  vm.loadDrivers = async () => {
+    vm.state.drivers.loading = true;
+    try {
+      vm.state.drivers = await window.meepInstaller.collectDrivers();
+    } catch (error) {
+      vm.state.drivers = {
+        loading: false,
+        packages: [],
+        installedDriverPackages: [],
+        kernelModules: [],
+        hardware: null,
+        errors: [error.message],
+      };
+    }
+    vm.state.drivers.loading = false;
     $scope.$evalAsync();
   };
 

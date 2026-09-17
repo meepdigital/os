@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('node:path');
 const listDisks = require('../disk/list');
+const { collect } = require('../drivers/collect');
 
 const isRoot = typeof process.getuid !== 'function' || process.getuid() === 0;
 
@@ -33,6 +34,7 @@ function createWindow() {
 
 ipcMain.handle('system:is-root', () => isRoot);
 ipcMain.handle('system:list-block-devices', async () => listDisks());
+ipcMain.handle('system:collect-drivers', async () => collect());
 ipcMain.handle('window:return-to-os', (event) => {
   BrowserWindow.fromWebContents(event.sender)?.destroy();
 });
