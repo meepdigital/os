@@ -1,0 +1,10 @@
+{
+  "name": "nodular",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "start": "npm run build && node build/start.mjs",
+    "check": "node --check src/build.mjs && node --check src/start.mjs && node --check src/shell/main.mjs && node --check src/shell/preload.mjs"
+  }
+}

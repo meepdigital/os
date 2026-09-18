@@ -3,10 +3,12 @@
 set -euo pipefail
 
 if [[ ${MEEP_MINIMAL:-0} == 1 ]]; then
-	# boot.sh copies this locally installed Electron runtime into the live
-	# system.  Keep only the installer dependency/build step in minimal mode;
-	# the global developer CLI bundle is optional.
+	# Electron is a required Meep runtime, including for Nodular. Keep the
+	# global runtime available while still limiting the rest of the developer
+	# CLI bundle in minimal mode. boot.sh also copies the local installer
+	# runtime into the live system.
 	echo "Building the Meep installer runtime in minimal mode."
+	npm install -g electron
 	cd "${SCRIPT_DIR}/installer"
 	npm install
 	npm run build
@@ -28,7 +30,7 @@ if [[ -d /usr/local/n/versions ]]; then
 		version_dir="${lock_file%/n.lock}"
 		echo "Removing incomplete Node.js download: ${version_dir}"
 		rm -rf -- "${version_dir}"
-	done < <(find /usr/local/n/versions -mindepth 3 -maxdepth 3 -type f -name n.lock -print)
+	done <<< "$(find /usr/local/n/versions -mindepth 3 -maxdepth 3 -type f -name n.lock -print)"
 fi
 
 rm -rf -- "${N_CACHE_PREFIX}"

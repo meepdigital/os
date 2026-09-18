@@ -45,7 +45,15 @@ Export the mounted OS to a live ISO without writing a USB:
 
 ```bash
 ./sh/persist --root /meep --build-only \
-  --iso ./ubuntu-26.04.1-desktop-amd64.iso
+  --source-iso ./ubuntu-26.04.1-desktop-amd64.iso
+```
+
+Use `--iso` instead of `--build-only` when you want the same ISO-only export;
+it never prompts for or writes a USB device:
+
+```bash
+./sh/persist --root /meep --iso \
+  --source-iso ./ubuntu-26.04.1-desktop-amd64.iso
 ```
 
 To export and write it, replace `--build-only` with the intended whole USB

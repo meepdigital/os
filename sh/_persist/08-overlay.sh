@@ -20,8 +20,10 @@ mount_overlay() {
   fi
 
   if [[ "${MODE}" == "create" ]]; then
+    mkdir -p "${WORK}/iso"
     mount -o loop,ro "${ISO}" "${WORK}/iso"
   else
+    mkdir -p "${WORK}/iso"
     mount -o ro "${ISO_PART}" "${WORK}/iso"
   fi
   cleanup_mounts+=("${WORK}/iso")

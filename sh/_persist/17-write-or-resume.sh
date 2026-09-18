@@ -6,7 +6,7 @@ unmount_device_partitions() {
     if findmnt -rn -S "${partition_path}" >/dev/null; then
       umount "${partition_path}"
     fi
-  done < <(lsblk -nrpo PATH "${DEVICE}" | tail -n +2 | tac)
+  done <<< "$(lsblk -nrpo PATH "${DEVICE}" | tail -n +2 | tac)"
 }
 
 write_usb() {

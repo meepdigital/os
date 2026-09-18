@@ -12,14 +12,14 @@ cleanup_existing_tree() {
       echo "Could not remove stale build mount: ${target}" >&2
       return 1
     }
-  done < <(findmnt -Rnr -o TARGET "${base}" | \
+  done <<< "$(findmnt -rn -o TARGET | \
     awk -v base="${base}" '$0 == base || index($0, base "/") == 1 { print length, $0 }' | \
-    sort -rn | cut -d' ' -f2-)
+    sort -rn | cut -d' ' -f2-)"
 
   while read -r loopdev; do
     [[ -n "${loopdev}" ]] || continue
     losetup -d "${loopdev}" >/dev/null 2>&1 || true
-  done < <(losetup -a | awk -v base="${base}" 'index($0, base) { sub(/:.*/, "", $1); print $1 }')
+  done <<< "$(losetup -a | awk -v base="${base}" 'index($0, base) { sub(/:.*/, "", $1); print $1 }')"
 }
 
 cleanup() {

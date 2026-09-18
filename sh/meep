@@ -82,6 +82,7 @@ source_part firewall
 source_part php
 source_part mysql
 source_part npm
+source_part nodular
 source_part purge
 source_part boot
 source_part appearance

@@ -1,0 +1,6 @@
+{
+  "name": "nodular",
+  "renderer": "Electron / Chromium / Blink / V8",
+  "windowManager": "native X11 C++",
+  "bootstrap": "5.x"
+}

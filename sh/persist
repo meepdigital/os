@@ -63,13 +63,13 @@ while (($#)); do
       ROOT_SOURCE="$(realpath "${1:?--root needs a mounted OS root}")"
       [[ ${ROOT_SOURCE} != / && -f ${ROOT_SOURCE}/etc/os-release ]] || { echo "Invalid OS root" >&2; exit 1; }
       ;;
-    --build-only)
+    --build-only|--iso)
       BUILD_ONLY=1
       ;;
-    --iso)
+    --source-iso)
       shift
-      ISO="$(realpath "${1:?--iso needs an existing source ISO}")"
-      [[ -f ${ISO} ]] || { echo "Missing ISO: ${ISO}" >&2; exit 1; }
+      ISO="$(realpath "${1:?--source-iso needs an existing source ISO}")"
+      [[ -f ${ISO} ]] || { echo "Missing source ISO: ${ISO}" >&2; exit 1; }
       ;;
     --resume)
       MODE="resume"

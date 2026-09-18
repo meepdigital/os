@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Nodular
+Comment=Minimal Node.js and X11 window manager
+Exec=/usr/local/bin/nodular-session
+TryExec=/usr/local/bin/nodular-session
+Type=Application
+DesktopNames=Nodular

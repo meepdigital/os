@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+  exec sudo -- "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+WORK_ROOT="${SCRIPT_DIR}/tmp"
+
+unmount_tree() {
+  local base="$1" target source
+  [[ -d ${base} ]] || return 0
+
+  targets=()
+  while IFS= read -r target; do
+    [[ -n ${target} ]] || continue
+    targets+=("${target}")
+  done <<< "$(findmnt -rn -o TARGET 2>/dev/null |
+    awk -v base="${base}" '$0 == base || index($0, base "/") == 1 { print length, $0 }' |
+    sort -rn |
+    cut -d' ' -f2-)"
+
+  for target in "${targets[@]:-}"; do
+    [[ -n ${target} ]] || continue
+    source="$(findmnt -rn -o SOURCE --target "${target}" 2>/dev/null || true)"
+    if umount "${target}" 2>/dev/null; then
+      echo "Unmounted ${target}"
+    else
+      echo "Lazily unmounting busy mount ${target}" >&2
+      umount -l "${target}" 2>/dev/null || true
+    fi
+
+    # Overlay cleanup can leave the squashfs loop referenced until the mount
+    # is gone. Detach only loops that persist created or used for this tree.
+    if [[ ${source} == /dev/loop* ]]; then
+      losetup -d "${source}" 2>/dev/null || true
+    fi
+  done
+}
+
+detach_project_loops() {
+  local base="$1" loopdev backing
+  local loop_entries
+  loop_entries="$(losetup --list --noheadings --output NAME,BACK-FILE 2>/dev/null || true)"
+  while read -r loopdev backing; do
+    [[ -n ${loopdev} && -n ${backing} ]] || continue
+    if [[ ${backing} == ${base} || ${backing} == ${base}/* ]]; then
+      losetup -d "${loopdev}" 2>/dev/null || true
+      echo "Detached ${loopdev} (${backing})"
+    fi
+  done <<< "${loop_entries}"
+}
+
+reset_tree() {
+  local base="$1"
+  unmount_tree "${base}"
+  detach_project_loops "${base}"
+  if findmnt -rn -o TARGET 2>/dev/null |
+       awk -v base="${base}" '$0 == base || index($0, base "/") == 1' |
+       grep -q .; then
+    echo "Warning: refusing to remove ${base}; mounts remain below it." >&2
+    return 0
+  fi
+  if [[ -e ${base} ]]; then
+    rm -rf -- "${base}"
+    echo "Removed ${base}"
+  fi
+}
+
+echo "Tearing down Ubuntu Meep persistence build resources..."
+reset_tree "${WORK_ROOT}/ubuntu-usb-build"
+reset_tree "${WORK_ROOT}/ubuntu-usb-resume"
+
+# Catch any project-owned loop backing file not visible through a remaining
+# mount, then report anything still mounted below the two known work trees.
+for base in "${WORK_ROOT}/ubuntu-usb-build" "${WORK_ROOT}/ubuntu-usb-resume"; do
+  detach_project_loops "${base}"
+  if findmnt -rn -o TARGET 2>/dev/null |
+       awk -v base="${base}" '$0 == base || index($0, base "/") == 1' |
+       grep -q .; then
+    echo "Warning: mounts remain below ${base}" >&2
+  fi
+done
+
+echo "Persistence build resources have been reset."

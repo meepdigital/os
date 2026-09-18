@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../bootstrap.min.css">
+  <title>Nodular</title>
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; background: transparent; }
+    .navbar { height: 56px; --bs-navbar-padding-y: 0; }
+    .navbar-brand { cursor: default; }
+    #windows { max-width: 55vw; overflow: hidden; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-dark px-3 shadow-lg">
+    <span class="navbar-brand mb-0 h1">Nodular</span>
+    <span id="windows" class="navbar-text ms-3">No managed windows</span>
+    <div class="ms-auto d-flex gap-2">
+      <button id="terminal" class="btn btn-sm btn-outline-light" type="button">Terminal</button>
+      <button id="close" class="btn btn-sm btn-outline-danger" type="button">Close</button>
+    </div>
+  </nav>
+  <script type="module">
+    const windows = document.querySelector('#windows');
+    const refresh = async () => {
+      try {
+        const ids = (await window.nodular.wm('windows')).split(/\s+/).filter(Boolean);
+        windows.textContent = ids.length ? `${ids.length} managed window${ids.length === 1 ? '' : 's'}` : 'No managed windows';
+      } catch {
+        windows.textContent = 'X11 manager unavailable';
+      }
+    };
+    document.querySelector('#terminal').addEventListener('click', () => window.nodular.wm('launch-terminal'));
+    document.querySelector('#close').addEventListener('click', () => window.nodular.wm('close'));
+    setInterval(refresh, 1000);
+    refresh();
+  </script>
+</body>
+</html>

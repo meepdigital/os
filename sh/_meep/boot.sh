@@ -74,10 +74,10 @@ for service in ubuntu-desktop-installer.service \
 done
 for desktop_dir in /usr/share/applications /etc/xdg/autostart; do
     [[ -d ${desktop_dir} ]] || continue
-    while IFS= read -r -d '' installer_desktop; do
+    while IFS= read -r installer_desktop; do
         rm -f "${installer_desktop}"
-    done < <(find "${desktop_dir}" -maxdepth 1 -type f -name '*.desktop' -exec \
-        grep -IlZ -e ubuntu-desktop-installer {} +)
+    done <<< "$(find "${desktop_dir}" -maxdepth 1 -type f -name '*.desktop' -exec \
+        grep -Il -e ubuntu-desktop-installer {} +)"
 done
 if [[ ${MEEP_LIVE_BUILD:-0} == 1 ]]; then
     echo "Meep graphics verified in /boot initramfs images; sh/persist will export this kernel/initramfs into the live ISO."
