@@ -58,8 +58,8 @@ done
     echo "Missing Meep Plymouth descriptor: ${BOOT_ASSETS_DIR}/ubuntu-meep.plymouth" >&2
     exit 1
 }
-[[ -f ${BOOT_ASSETS_DIR}/background-tile.png ]] || {
-    echo "Missing Meep Plymouth background: ${BOOT_ASSETS_DIR}/background-tile.png" >&2
+[[ -f ${BOOT_ASSETS_DIR}/background.png ]] || {
+    echo "Missing Meep Plymouth background: ${BOOT_ASSETS_DIR}/background.png" >&2
     exit 1
 }
 
@@ -103,6 +103,10 @@ fi
 
 grep -q '^UseFirmwareBackground=false$' "${MEEP_DESCRIPTOR}" || {
     echo "Meep Plymouth descriptor must disable firmware/BGRT backgrounds" >&2
+    exit 1
+}
+grep -q '^ScaleBackgroundImage=true$' "${MEEP_DESCRIPTOR}" || {
+    echo "Meep Plymouth descriptor must scale the full-screen background" >&2
     exit 1
 }
 grep -q '^DialogClearsFirmwareBackground=true$' "${MEEP_DESCRIPTOR}" || {

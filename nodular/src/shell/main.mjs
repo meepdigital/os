@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
+import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 
 const source = dirname(fileURLToPath(import.meta.url));
 const socketPath = process.env.NODULAR_WM_SOCKET || '/tmp/nodular.sock';
@@ -20,12 +22,16 @@ function wm(command) {
 
 async function createNavbar() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const panelHeight = 56;
+  const overhang = 16;
   navbar = new BrowserWindow({
     width,
-    height: 56,
+    height: panelHeight + overhang + 240,
     x: 0,
-    y: height - 56,
+    y: height - panelHeight - overhang - 240,
     frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
     resizable: false,
     movable: false,
     skipTaskbar: true,
@@ -46,6 +52,25 @@ async function createNavbar() {
   navbar.setIgnoreMouseEvents(false);
 }
 
+function launchApplication(application) {
+  const home = process.env.HOME || '/tmp';
+  const applications = {
+    files: existsSync('/usr/bin/nautilus')
+      ? ['/usr/bin/nautilus', ['--new-window', home]]
+      : existsSync('/usr/bin/nemo')
+        ? ['/usr/bin/nemo', [home]]
+        : ['/usr/bin/xdg-open', [home]],
+    terminal: ['/usr/bin/x-terminal-emulator', []],
+    browser: ['/usr/bin/xdg-open', ['https://www.google.com']],
+  };
+  const command = applications[application];
+  if (!command) throw new Error(`Unknown application: ${application}`);
+  const child = spawn(command[0], command[1], { detached: true, stdio: 'ignore' });
+  child.unref();
+  return 'ok';
+}
+
 app.whenReady().then(createNavbar);
 ipcMain.handle('nodular-wm', (_event, command) => wm(command));
+ipcMain.handle('launch-application', (_event, application) => launchApplication(application));
 app.on('window-all-closed', (event) => event.preventDefault());

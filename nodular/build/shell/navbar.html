@@ -4,17 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="../bootstrap.min.css">
+  <link rel="stylesheet" href="../fontawesome/css/all.min.css">
   <title>Nodular</title>
   <style>
     html, body { height: 100%; margin: 0; overflow: hidden; background: transparent; }
-    .navbar { height: 56px; --bs-navbar-padding-y: 0; }
-    .navbar-brand { cursor: default; }
+    body { pointer-events: none; }
+    .navbar { position: absolute; right: 0; bottom: 0; left: 0; height: 56px; --bs-navbar-padding-y: 0; pointer-events: auto; }
+    .launcher { position: relative; z-index: 2; align-self: flex-end; width: 64px; height: 72px; margin: 0 0 -16px 0; padding: 0; border: 0; color: #ddd; background: transparent; font-size: 2rem; line-height: 1; }
+    .launcher:hover, .launcher:focus-visible { color: #fff; }
+    .launcher:focus { box-shadow: none; }
+    .dropdown-menu { pointer-events: auto; min-width: 210px; margin-bottom: 8px; }
+    .dropdown-item i { width: 1.4rem; text-align: center; }
     #windows { max-width: 55vw; overflow: hidden; white-space: nowrap; }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-dark bg-dark px-3 shadow-lg">
-    <span class="navbar-brand mb-0 h1">Nodular</span>
+    <div class="dropup">
+      <button id="launcher" class="launcher" type="button" aria-expanded="false" aria-controls="application-menu" title="Applications">
+        <i class="fa-solid fa-hand" aria-hidden="true"></i>
+        <span class="visually-hidden">Applications</span>
+      </button>
+      <div id="application-menu" class="dropdown-menu shadow" aria-labelledby="launcher">
+        <button class="dropdown-item" type="button" data-application="files"><i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Files</button>
+        <button class="dropdown-item" type="button" data-application="terminal"><i class="fa-solid fa-terminal me-2" aria-hidden="true"></i>Terminal</button>
+        <button class="dropdown-item" type="button" data-application="browser"><i class="fa-solid fa-globe me-2" aria-hidden="true"></i>Web Browser</button>
+      </div>
+    </div>
     <span id="windows" class="navbar-text ms-3">No managed windows</span>
     <div class="ms-auto d-flex gap-2">
       <button id="terminal" class="btn btn-sm btn-outline-light" type="button">Terminal</button>
@@ -23,6 +39,26 @@
   </nav>
   <script type="module">
     const windows = document.querySelector('#windows');
+    const launcher = document.querySelector('#launcher');
+    const applicationMenu = document.querySelector('#application-menu');
+    const toggleMenu = () => {
+      const open = applicationMenu.classList.toggle('show');
+      launcher.setAttribute('aria-expanded', String(open));
+    };
+    launcher.addEventListener('click', toggleMenu);
+    document.querySelectorAll('[data-application]').forEach((item) => {
+      item.addEventListener('click', async () => {
+        await window.nodular.launch(item.dataset.application);
+        applicationMenu.classList.remove('show');
+        launcher.setAttribute('aria-expanded', 'false');
+      });
+    });
+    document.addEventListener('click', (event) => {
+      if (!launcher.contains(event.target) && !applicationMenu.contains(event.target)) {
+        applicationMenu.classList.remove('show');
+        launcher.setAttribute('aria-expanded', 'false');
+      }
+    });
     const refresh = async () => {
       try {
         const ids = (await window.nodular.wm('windows')).split(/\s+/).filter(Boolean);

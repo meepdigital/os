@@ -3,8 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node src/build.mjs",
-    "start": "npm run build && node build/start.mjs",
-    "check": "node --check src/build.mjs && node --check src/start.mjs && node --check src/shell/main.mjs && node --check src/shell/preload.mjs"
+    "build": "node build.mjs",
+    "start": "npm run build && node ../build/start.mjs",
+    "check": "node --check build.mjs && node --check start.mjs && node --check shell/main.mjs && node --check shell/preload.mjs"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2"
   }
 }
