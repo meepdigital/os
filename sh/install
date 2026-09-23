@@ -1,0 +1,134 @@
+#!/bin/bash
+# Install and configure the Ubuntu Meep desktop inside the current root.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ "${EUID}" -ne 0 ]]; then
+	exec sudo -- "$0" "$@"
+fi
+
+SH_DIR="${SCRIPT_DIR}/sh/_install"
+
+# Keep one complete provisioning transcript beside this entrypoint. tee keeps
+# the live terminal output while also making recursive failures diagnosable.
+exec > >(tee -a "${SCRIPT_DIR}/meep.log") 2>&1
+echo "===== sh/install started: $(date --iso-8601=seconds) ====="
+
+if [[ ${MEEP_PROVISIONING:-0} == 1 ]]; then
+	echo "Recursive sh/install invocation detected; refusing to continue." >&2
+	exit 99
+fi
+export MEEP_PROVISIONING=1
+declare -A MEEP_SOURCED_PARTS=()
+
+# Minimal still builds the Meep desktop and its installer, but omits the
+# optional repositories, application stacks, databases, language toolchains,
+# and snap bundle. The npm phase builds the required Electron runtime in
+# both modes, including the runtime used by Nodular.
+MINIMAL_IGNORE=(
+	repo
+	spotify
+	teams
+	php
+	go
+	snap
+	mysql
+	purge
+	appearance
+	firewall
+	menu
+	panel
+)
+
+MINIMAL=0
+BOOT_ONLY=0
+for arg in "$@"; do
+	case ${arg} in
+		--minimal) MINIMAL=1 ;;
+		--boot-only) BOOT_ONLY=1 ;;
+		*) echo "Usage: ./sh/install [--minimal] [--boot-only]" >&2; exit 1 ;;
+	esac
+done
+
+# Keep the mode visible to sourced parts as well as to callers that invoke one
+# of those parts directly.  The source_part dispatcher is the normal skip
+# path; individual optional parts also enforce this contract defensively.
+export MEEP_MINIMAL="${MINIMAL}"
+
+if ((BOOT_ONLY)); then
+	# shellcheck source=/dev/null
+	. "${SH_DIR}/boot.sh"
+	exit 0
+fi
+
+export MEEP_CHROOT=${MEEP_CHROOT:-0}
+if systemd-detect-virt --chroot --quiet; then
+    export MEEP_CHROOT=1
+fi
+
+# Serialize runs so completion records and installers cannot race.
+. "${SH_DIR}/cache.sh"
+exec {meep_lock_fd}>"${MEEP_STATE_DIR}/lock"
+flock "${meep_lock_fd}"
+
+source_part() {
+	local name="$1"
+	local path="${SH_DIR}/${name}.sh"
+	local minimal_part
+
+	if [[ ${MEEP_SOURCED_PARTS[${name}]:-0} == 1 ]]; then
+		echo "Duplicate provisioning phase requested: ${name}; skipping." >&2
+		return 0
+	fi
+	MEEP_SOURCED_PARTS[${name}]=1
+	echo "===== provisioning phase: ${name} ====="
+
+	if ((MINIMAL)); then
+		for minimal_part in "${MINIMAL_IGNORE[@]}"; do
+			if [[ ${name} == "${minimal_part}" ]]; then
+				echo "Skipping ${name} in minimal mode."
+				return 0
+			fi
+		done
+	fi
+
+	# Include mode, target release, and shared installer logic in the cache key.
+	MEEP_PHASE_FINGERPRINT=$(
+		{ sha256sum "${path}" "${SH_DIR}/cache.sh" "${SH_DIR}/setup.sh";
+		  cat /etc/os-release;
+		  printf '%s\n' "${MINIMAL}" "${MEEP_CHROOT}";
+		} | sha256sum
+	)
+	case ${name} in
+		base|repo|core|spotify|teams|go|php|mysql|npm)
+			meep_once "phase-${name}" source "${path}"
+			;;
+		*)
+			# Setup exports and desktop configuration must apply on every run,
+			# including for new users. Snap checks the actual installed set.
+			. "${path}"
+			;;
+	esac
+}
+
+source_part setup
+source_part base
+source_part npm
+source_part repo
+source_part core
+source_part spotify
+source_part teams
+source_part go
+source_part firewall
+source_part php
+source_part mysql
+source_part nodular
+source_part purge
+source_part boot
+source_part appearance
+source_part design
+source_part snap
+#source_part menu
+#source_part panel

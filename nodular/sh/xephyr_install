@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if ((EUID != 0)); then
+  exec sudo bash "$(realpath -- "${BASH_SOURCE[0]}")" "$@"
+fi
+apt-get update
+if ! command -v node >/dev/null || ! command -v npm >/dev/null; then
+  apt-get install -y nodejs npm
+fi
+apt-get install -y --no-install-recommends \
+  xserver-xephyr xauth x11-utils x11-xserver-utils xterm dbus-x11 xcompmgr \
+  build-essential python3 pkg-config libx11-dev php-cli php-mbstring \
+  php-xml composer ca-certificates unzip feh \
+  libgtk-3-0 libnss3 libasound2t64 libgbm1
+printf '\nDependencies installed. As your normal user, run npm install && npm run build, then ./sh/start.\n'

@@ -1,0 +1,48 @@
+{
+  "start": {
+    "html": "<h1 class=\"display-6 fw-bold mb-3\">Meep</h1><p class=\"lead muted\"><b>Meep</b> is a carefully assembled <b class=\"fw-bold text-light\">Ubuntu</b> desktop environment for people who want a capable, creative, and developer-friendly computer without having to build every part of it themselves.</p><p class=\"muted\">The installer will prepare the current Meep system for your computer, preserving the polished desktop experience while bringing together the tools needed for everyday work, development, media, and system administration.</p><p><b>Technologies:</b></p><ul class=\"mb-0 ps-4 muted\"><li class=\"mb-2\"><strong class=\"text-light\">Ubuntu and Cinnamon desktop</strong> <br />with a familiar Linux workspace, desktop utilities, system settings, and a practical foundation for everyday computing.</li><li class=\"mb-2\"><strong class=\"text-light\">Command-line foundations</strong> <br />including APT, software repository support, Git, Git LFS, curl, wget, GnuPG, jq, nano, and tools for ZIP, GZIP, 7-Zip, and other archive formats.</li><li class=\"mb-2\"><strong class=\"text-light\">Creative and office software</strong> <br />including GIMP for image editing, Inkscape for vector graphics, LibreOffice for documents, VLC for media playback, SimpleScreenRecorder, and File Roller for archives.</li><li class=\"mb-2\"><strong class=\"text-light\">Web browsing and communication</strong> <br />with Google Chrome, Slack, Discord, Zoom, and additional desktop clients for collaboration, meetings, messaging, and daily web-based work.</li><li class=\"mb-2\"><strong class=\"text-light\">Web server development</strong> <br />with Apache, PHP-FPM, a broad PHP module set, Composer for dependency management, Symfony CLI, and Drush Launcher for PHP and Drupal workflows.</li><li class=\"mb-2\"><strong class=\"text-light\">Databases and data services</strong> <br />including MySQL client and server, PostgreSQL, Redis, Redis Server, and Memcached for relational data, caching, queues, and application development.</li><li class=\"mb-2\"><strong class=\"text-light\">JavaScript and application tooling</strong> <br />with Node.js, npm, Electron, ESLint, Sass, Nodemon, Heroku tooling, and developer utilities for building, testing, and running modern applications.</li><li class=\"mb-2\"><strong class=\"text-light\">Multi-language development</strong> <br />with Python and pip, Go, Java, Gradle, Maven, Ruby, Rake, Rustup, and Perl to support a wide range of programming languages and build systems.</li><li class=\"mb-2\"><strong class=\"text-light\">Containers and virtual machines</strong> <br />with Docker and Docker Compose for isolated services, QEMU for emulation, VirtualBox for desktop virtual machines, and tools for managing virtual disks.</li><li><strong class=\"text-light\">Security, networking, and synchronization</strong> <br />with UFW and Gufw firewall controls, rsync and rclone for file synchronization, GVFS backends for connected storage, and Meep performance services such as zram and managed temporary caches.</li></ul>",
+    "chooseLanguage": "Choose your language",
+    "languageDescription": "This will be used throughout the installer and initial system setup.",
+    "languageLabel": "Language",
+    "englishUnitedStates": "English (United States)",
+    "englishUnitedKingdom": "English (United Kingdom)",
+    "spanish": "Español",
+    "french": "Français",
+    "german": "Deutsch"
+  },
+  "index": {
+    "installTitle": "Install Ubuntu Meep",
+    "returnToOs": "return to OS",
+    "returnTooltip": "Return to the operating system",
+    "ariaLabel": "return to OS",
+    "back": "Back",
+    "next": "Next",
+    "install": "Install"
+  },
+  "keyboard": {
+    "heading": "Keyboard layout",
+    "description": "Choose the layout connected to this computer.",
+    "label": "Keyboard layout",
+    "englishUs": "English (US)",
+    "englishUk": "English (UK)",
+    "german": "German",
+    "french": "French",
+    "spanish": "Spanish"
+  },
+  "disks": {
+    "heading": "System storage",
+    "description": "Choose the disk where Ubuntu Meep will be installed.",
+    "noDisks": "No eligible disks were found.",
+    "warning": "No disk will be modified by this test build. Disk selection and installation remain behind the final review step."
+  },
+  "review": {
+    "heading": "Review your choices",
+    "description": "The next step is the protected installation boundary.",
+    "language": "Language",
+    "keyboard": "Keyboard",
+    "detectedDisks": "Detected disks",
+    "selectedDisk": "Selected disk",
+    "noneSelected": "None selected",
+    "installGated": "The disk-writing backend is intentionally gated while the installer pages are being tested."
+  }
+}

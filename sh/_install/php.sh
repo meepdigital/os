@@ -1,0 +1,142 @@
+#!/bin/bash
+# Ubuntu Meep provisioning module.
+
+# Also allow this module to be invoked directly.
+if ! declare -F meep_once >/dev/null; then
+	. "$(dirname -- "${BASH_SOURCE[0]}")/cache.sh"
+fi
+
+PHP_MODULES=(
+	apcu
+	ast
+	bcmath
+	bz2
+	cli
+	common
+	curl
+	decimal
+	dev
+	fpm
+	gd
+	grpc
+	http
+	igbinary
+	imap
+	intl
+	mbstring
+	memcached
+	mysql
+	oauth
+	opcache
+	pgsql
+	protobuf
+	ps
+	pspell
+	psr
+	readline
+	redis
+	smbclient
+	soap
+	solr
+	sqlite3
+	ssh2
+	tidy
+	uploadprogress
+	uuid
+	xdebug
+	xlswriter
+	xml
+	xmlrpc
+	xsl
+	yaml
+	zip
+)
+
+target_codename=$(. /etc/os-release; printf '%s' "${VERSION_CODENAME}")
+php_prefix=php
+[[ ${target_codename} != noble ]] || php_prefix=php8.4
+meep_apt_install "${php_prefix}" "${php_prefix}-cli" "${php_prefix}-fpm"
+PHP_PACKAGES=()
+for module in "${PHP_MODULES[@]}"; do
+    package="${php_prefix}-${module}"
+    # Read the complete apt-cache output; exiting awk early can SIGPIPE
+    # apt-cache under the repository's pipefail setting (status 141).
+    candidate=$(apt-cache policy "${package}" | awk '/Candidate:/ && !seen {print $2; seen=1}')
+    if [[ -n ${candidate} && ${candidate} != '(none)' ]]; then
+        PHP_PACKAGES+=("${package}")
+    else
+        echo "Optional PHP module unavailable on ${target_codename}: ${package}"
+    fi
+done
+((${#PHP_PACKAGES[@]} == 0)) || meep_apt_install "${PHP_PACKAGES[@]}"
+
+php_version=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+a2enconf "php${php_version}-fpm"
+a2enmod proxy_fcgi setenvif
+
+# composer
+if [[ ! -x /usr/local/bin/composer ]]; then
+	EXPECTED_CHECKSUM="$(php -r "copy('https://composer.github.io/installer.sig', 'php://stdout');")"
+	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+	ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+	if [[ "${EXPECTED_CHECKSUM}" != "${ACTUAL_CHECKSUM}" ]]; then
+		rm -f composer-setup.php
+		echo "Composer installer checksum mismatch" >&2
+		exit 1
+	fi
+
+	php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+	rm -f composer-setup.php
+else
+	echo "Already installed: composer; skipping."
+fi
+
+COMPOSER_GLOBAL_HOME=/usr/local/share/composer
+COMPOSER_GLOBAL_BIN="${COMPOSER_GLOBAL_HOME}/vendor/bin"
+
+install -d -m 0755 "${COMPOSER_GLOBAL_HOME}"
+install -d -m 0755 /etc/profile.d
+
+cat <<'EOF' >/etc/profile.d/composer-global-bin.sh
+#!/bin/sh
+COMPOSER_GLOBAL_BIN="/usr/local/share/composer/vendor/bin"
+
+case ":${PATH}:" in
+	*:"${COMPOSER_GLOBAL_BIN}":*)
+		;;
+	*)
+		export PATH="${COMPOSER_GLOBAL_BIN}:${PATH}"
+		;;
+esac
+EOF
+chmod 0644 /etc/profile.d/composer-global-bin.sh
+
+export COMPOSER_HOME="${COMPOSER_GLOBAL_HOME}"
+export COMPOSER_ALLOW_SUPERUSER=1
+export PATH="${COMPOSER_GLOBAL_BIN}:${PATH}"
+
+# symfony
+if ! meep_package_installed symfony-cli; then
+	symfony_setup=$(mktemp)
+	curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh' -o "${symfony_setup}"
+	bash "${symfony_setup}"
+	rm -f "${symfony_setup}"
+	apt-get update
+	meep_apt_install symfony-cli
+else
+	echo "Already installed: symfony-cli; skipping."
+fi
+
+# Drush Launcher finds and executes the project-local drush/drush installed in
+# each repo's vendor directory, so the global `drush` command matches the Drupal
+# project's own Drush version instead of forcing one global Composer copy.
+if [[ ! -x /usr/local/bin/drush ]]; then
+	curl -fL \
+		https://github.com/drush-ops/drush-launcher/releases/latest/download/drush.phar \
+		-o "${MEEP_CACHE_DIR}/drush.phar.partial"
+	install -m 0755 "${MEEP_CACHE_DIR}/drush.phar.partial" /usr/local/bin/drush
+	rm -f "${MEEP_CACHE_DIR}/drush.phar.partial"
+else
+	echo "Already installed: drush; skipping."
+fi

@@ -1,0 +1,5 @@
+{
+  "name": "meep/nodular",
+  "description": "PHP Twig runtime for node-twig",
+  "require": { "twig/twig": "^3.0" }
+}

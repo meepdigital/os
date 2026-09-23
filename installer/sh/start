@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ ${EUID} -eq 0 ]]; then
+    if [[ -x ${script_dir}/run ]]; then
+        exec "${script_dir}/run" "$@"
+    fi
+    exec /usr/local/lib/meep-installer/run.sh "$@"
+else
+    if [[ -x ${script_dir}/run ]]; then
+        exec sudo -n "${script_dir}/run" "$@"
+    fi
+    exec sudo -n /usr/local/bin/install-ubuntu-meep "$@"
+fi

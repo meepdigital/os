@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+import { env } from '../src/js/core/env.js';
+import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { root } from '../src/js/core/paths.js';
+
+execFileSync('composer', ['install', '--no-dev', '--no-interaction', '--prefer-dist'], {
+  cwd: root, stdio: 'inherit',
+});
+// Bootstrap directly with PHP Twig: node-twig's bridge is what we are generating,
+// so this also works on a clean npm install before that bridge exists.
+const bootstrap = String.raw`
+require $argv[1] . '/vendor/autoload.php';
+$twig = new \Twig\Environment(new \Twig\Loader\FilesystemLoader($argv[1] . '/src/templates'), [
+    'autoescape' => false, 'strict_variables' => true,
+]);
+echo $twig->render('twig.php.twig', json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR));
+`;
+const output = execFileSync('php', ['-r', bootstrap, root], {
+  cwd: root, input: JSON.stringify({ env, extension_directory: 'src/extensions' }), encoding: 'utf8',
+});
+writeFileSync(join(root, 'node_modules/node-twig/php/Twig.php'), output);

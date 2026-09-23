@@ -1,0 +1,39 @@
+{
+  "name": "nodular",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install": "./sh/twig_setup",
+    "build": "./sh/build",
+    "xephyr": "./sh/xephyr_init",
+    "check": "./sh/check"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "dotenv": "^18.0.3",
+    "node-twig": "^1.2.0",
+    "nodemon": "^3.1.14",
+    "uuid": "^14.0.2",
+    "webpack": "^5.111.1"
+  },
+  "main": "build/js/main.mjs",
+  "gypfile": true,
+  "devDependencies": {
+    "electron": "^44.4.3",
+    "node-gyp": "^13.0.2",
+    "sass": "^1.104.1",
+    "webpack-cli": "^7.2.3"
+  },
+  "allowScripts": {
+    "electron": true,
+    "node-twig": false
+  },
+  "overrides": {
+    "exec-php": {
+      "tmp": "^0.2.6"
+    }
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  }
+}

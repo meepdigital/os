@@ -1,0 +1,5 @@
+<section class="p-4 p-lg-5">
+  <h2 class="h3 mb-2" ng-bind="vm.state.lang.review.heading"></h2><p class="muted mb-4" ng-bind="vm.state.lang.review.description"></p>
+  <dl class="row mb-0"><dt class="col-sm-4" ng-bind="vm.state.lang.review.language"></dt><dd class="col-sm-8">{{ vm.state.language }}</dd><dt class="col-sm-4" ng-bind="vm.state.lang.review.keyboard"></dt><dd class="col-sm-8">{{ vm.state.keyboard }}</dd><dt class="col-sm-4" ng-bind="vm.state.lang.review.detectedDisks"></dt><dd class="col-sm-8">{{ vm.state.disks.length }}</dd><dt class="col-sm-4" ng-bind="vm.state.lang.review.selectedDisk"></dt><dd class="col-sm-8"><code><span ng-if="vm.state.selectedDisk">{{ vm.state.selectedDisk }}</span><span ng-if="!vm.state.selectedDisk" ng-bind="vm.state.lang.review.noneSelected"></span></code></dd></dl>
+  <div uib-alert ng-if="vm.installResult" ng-class="'alert-' + vm.installResult.type" class="mt-4 mb-0">{{ vm.installResult.message }}</div>
+</section>

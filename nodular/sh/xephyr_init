@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+if ((EUID == 0)); then echo 'Run Xephyr as your normal desktop user.' >&2; exit 1; fi
+: "${DISPLAY:?Start this from a terminal in your desktop session}"
+for dependency in Xephyr xauth xdpyinfo dbus-run-session setsid xcompmgr node; do
+  command -v "${dependency}" >/dev/null || {
+    echo "Missing ${dependency}; run bash sh/xephyr_install first." >&2; exit 1;
+  }
+done
+[[ -f build/js/session.mjs && -f build/Release/x11wm.node ]] || npm run build
+
+# Fit within the active primary monitor, leaving room for the host's panel/frame.
+geometry="$(xrandr --current 2>/dev/null | awk '/ connected primary / {for(i=1;i<=NF;i++) if($i ~ /^[0-9]+x[0-9]+\+/) {split($i,a,"+"); print a[1]; exit}}' || true)"
+if [[ -z ${geometry} ]]; then
+  geometry="$(xdpyinfo | awk '/dimensions:/ {print $2; exit}')"
+fi
+width=${geometry%x*}; height=${geometry#*x}
+width=$((width * 9 / 10)); height=$((height * 4 / 5))
+((width > 1600)) && width=1600
+((height > 1000)) && height=1000
+configured_size="$(node --input-type=module -e 'import "./src/js/core/env.js"; process.stdout.write(process.env.NODULAR_XEPHYR_SIZE || "")')"
+size=${configured_size:-${width}x${height}}
+[[ ${size} =~ ^[0-9]+x[0-9]+$ ]] || { echo 'Invalid NODULAR_XEPHYR_SIZE' >&2; exit 1; }
+
+runtime="$(mktemp -d "${TMPDIR:-/tmp}/nodular-xephyr.XXXXXX")"
+xephyr_pid=''; compositor_pid=''; session_pid=''
+cleanup() {
+  trap - EXIT INT TERM
+  [[ -z ${session_pid} ]] || kill -TERM -- "-${session_pid}" 2>/dev/null || true
+  [[ -z ${compositor_pid} ]] || kill "${compositor_pid}" 2>/dev/null || true
+  [[ -z ${xephyr_pid} ]] || kill "${xephyr_pid}" 2>/dev/null || true
+  [[ -z ${session_pid} ]] || wait "${session_pid}" 2>/dev/null || true
+  [[ -z ${xephyr_pid} ]] || wait "${xephyr_pid}" 2>/dev/null || true
+  rm -rf -- "${runtime}"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# Let the X server atomically choose an unused display; retain access control.
+authority=${runtime}/Xauthority
+cookie="$(node --input-type=module -e 'import { randomBytes } from "node:crypto"; console.log(randomBytes(16).toString("hex"))')"
+touch "${authority}"; chmod 600 "${authority}"
+xauth -f "${authority}" add :100 MIT-MAGIC-COOKIE-1 "${cookie}"
+Xephyr -displayfd 3 -auth "${authority}" -screen "${size}" -dpi 96 \
+  -nolisten tcp -noreset -no-host-grab -br -title 'Nodular development' \
+  3>"${runtime}/display" >"${runtime}/xephyr.log" 2>&1 &
+xephyr_pid=$!
+for ((attempt=0; attempt<100; attempt++)); do
+  [[ ! -s ${runtime}/display ]] || break
+  kill -0 "${xephyr_pid}" 2>/dev/null || { cat "${runtime}/xephyr.log" >&2; exit 1; }
+  sleep 0.05
+done
+[[ -s ${runtime}/display ]] || { cat "${runtime}/xephyr.log" >&2; exit 1; }
+nested_display=":$(cat "${runtime}/display")"
+xauth -f "${authority}" add "${nested_display}" MIT-MAGIC-COOKIE-1 "${cookie}"
+DISPLAY=${nested_display} XAUTHORITY=${authority} xdpyinfo >/dev/null
+printf 'Nodular: %s, %s. Close the Xephyr window or press Ctrl+C to stop.\n' "${nested_display}" "${size}"
+mkdir -p "${runtime}/config" "${runtime}/cache" "${runtime}/data" "${runtime}/run"
+chmod 700 "${runtime}/run"
+DISPLAY="${nested_display}" XAUTHORITY="${authority}" xcompmgr -n -f -D 3 >"${runtime}/xcompmgr.log" 2>&1 &
+compositor_pid=$!
+sleep 0.2
+# New session bus and disposable settings; all descendants share a killable group.
+setsid env -u DBUS_SESSION_BUS_ADDRESS -u SESSION_MANAGER -u WAYLAND_DISPLAY \
+  DISPLAY="${nested_display}" XAUTHORITY="${authority}" \
+  NODULAR_NESTED=1 XDG_RUNTIME_DIR="${runtime}/run" XDG_SESSION_TYPE=x11 XDG_CONFIG_HOME="${runtime}/config" \
+  XDG_CACHE_HOME="${runtime}/cache" XDG_DATA_HOME="${runtime}/data" \
+  dbus-run-session -- node build/js/session.mjs &
+session_pid=$!
+set +e
+wait -n "${xephyr_pid}" "${session_pid}"
+status=$?
+set -e
+exit "${status}"

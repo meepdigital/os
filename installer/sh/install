@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo 'Desktop integration must be installed as root. Run: sudo npm run desktop' >&2
+  exit 1
+fi
+
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+app_root=/usr/local/lib/meep-installer
+app_bin=/usr/local/bin/install-ubuntu-meep
+user_bin=/usr/local/bin/start-ubuntu-meep
+boot_bin=/usr/local/bin/meep-install-current
+desktop=/usr/share/applications/install-ubuntu-meep.desktop
+autostart=/etc/xdg/autostart/meep-install-current.desktop
+sudoers=/etc/sudoers.d/ubuntu-meep-installer
+icon=/usr/share/icons/hicolor/128x128/apps/ubuntu-meep-installer.png
+electron_runtime="${repo}/node_modules/electron/dist"
+
+[[ -x ${electron_runtime}/electron ]] || {
+  echo "Missing local Electron runtime: ${electron_runtime}. Run npm install first." >&2
+  exit 1
+}
+
+install -d -m 0755 "${app_root}/dist" /usr/local/bin /etc/xdg/autostart "$(dirname -- "${icon}")"
+cp -a -- "${repo}/dist/." "${app_root}/dist/"
+install -d -m 0755 "${app_root}/electron-dist"
+cp -a -- "${electron_runtime}/." "${app_root}/electron-dist/"
+chmod 0755 "${app_root}/electron-dist/electron"
+install -m 0755 "${repo}/sh/run" "${app_root}/run.sh"
+install -m 0755 "${repo}/sh/start" "${user_bin}"
+install -m 0644 "${repo}/assets/installer.png" "${icon}"
+
+install -m 0755 /dev/stdin "${app_bin}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+exec /usr/local/lib/meep-installer/run.sh "$@"
+EOF
+
+install -m 0440 /dev/stdin "${sudoers}" <<'EOF'
+# The live desktop has no root password. Limit passwordless elevation to Meep's installer.
+%sudo ALL=(root) NOPASSWD: /usr/local/bin/install-ubuntu-meep
+casper ALL=(root) NOPASSWD: /usr/local/bin/install-ubuntu-meep
+EOF
+
+install -m 0755 /dev/stdin "${boot_bin}" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+grep -qw -- meep.install=1 /proc/cmdline || exit 0
+exec /usr/local/bin/start-ubuntu-meep "$@"
+EOF
+
+install -d -m 0755 /usr/share/applications /usr/share/icons/hicolor/128x128/apps /etc/skel/Desktop
+install -m 0644 /dev/stdin "${desktop}" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Install Ubuntu Meep
+Comment=Install Ubuntu Meep on this computer
+Exec=/usr/local/bin/start-ubuntu-meep
+Icon=ubuntu-meep-installer
+Terminal=false
+Categories=System;Settings;
+EOF
+install -m 0755 "${desktop}" /etc/skel/Desktop/install-ubuntu-meep.desktop
+
+install -m 0644 /dev/stdin "${autostart}" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Install Ubuntu Meep (boot mode)
+Exec=/usr/local/bin/meep-install-current
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+EOF
+
+for directory in /usr/share/applications /etc/xdg/autostart; do
+  [[ -d ${directory} ]] || continue
+  while IFS= read -r -d '' candidate; do
+    [[ ${candidate} == "${desktop}" ]] && continue
+    grep -Eqi 'ubuntu-cinnamon-installer|ubuntu-desktop-installer|subiquity' "${candidate}" && rm -f -- "${candidate}" || true
+  done < <(find "${directory}" -maxdepth 1 -type f -name '*.desktop' -print0)
+done
+
+for desktop_dir in /etc/skel/Desktop /home/casper/Desktop; do
+  install -d -m 0755 "${desktop_dir}"
+  install -m 0755 "${desktop}" "${desktop_dir}/$(basename -- "${desktop}")"
+done
+
+echo "Installed ${desktop}"

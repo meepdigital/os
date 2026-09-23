@@ -1,0 +1,31 @@
+<section class="p-4 p-lg-5">
+  <h2 class="h3 mb-2">Hardware drivers</h2>
+  <p class="muted mb-4">Meep is detecting the drivers and firmware associated with this computer. This page is informational; it does not install anything yet.</p>
+  <p class="muted" ng-if="vm.state.drivers.loading">Detecting hardware drivers...</p>
+
+  <div ng-if="!vm.state.drivers.loading">
+    <div class="alert alert-secondary small" ng-if="vm.state.drivers.note">{{ vm.state.drivers.note }}</div>
+
+    <h3 class="h5">Driver packages recommended for installation</h3>
+    <ul class="mb-4" ng-if="vm.state.drivers.packages.length">
+      <li ng-repeat="driver in vm.state.drivers.packages track by driver.name"><strong>{{ driver.name }}</strong> — {{ driver.source }} — {{ driver.reason }}</li>
+    </ul>
+    <p class="muted" ng-if="!vm.state.drivers.packages.length">No additional Ubuntu driver packages were recommended.</p>
+
+    <h3 class="h5 mt-4">Installed driver and firmware packages</h3>
+    <ul class="mb-4" ng-if="vm.state.drivers.installedDriverPackages.length">
+      <li ng-repeat="driver in vm.state.drivers.installedDriverPackages track by driver">{{ driver }}</li>
+    </ul>
+    <p class="muted" ng-if="!vm.state.drivers.installedDriverPackages.length">No installed driver packages were reported.</p>
+
+    <h3 class="h5 mt-4">Detected kernel drivers and modules</h3>
+    <ul class="mb-4" ng-if="vm.state.drivers.kernelModules.length">
+      <li ng-repeat="module in vm.state.drivers.kernelModules track by module">{{ module }}</li>
+    </ul>
+    <p class="muted" ng-if="!vm.state.drivers.kernelModules.length">No kernel modules were reported.</p>
+
+    <div class="alert alert-warning small" ng-if="vm.state.drivers.errors.length">Driver detection warnings:
+      <ul class="mb-0"><li ng-repeat="error in vm.state.drivers.errors track by $index">{{ error }}</li></ul>
+    </div>
+  </div>
+</section>

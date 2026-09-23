@@ -1,0 +1,12 @@
+<section class="p-4 p-lg-5">
+  <h2 class="h3 mb-2" ng-bind="vm.state.lang.keyboard.heading"></h2>
+  <p class="muted mb-4" ng-bind="vm.state.lang.keyboard.description"></p>
+  <label class="form-label" for="keyboard" ng-bind="vm.state.lang.keyboard.label"></label>
+  <select id="keyboard" class="form-select form-select-lg" ng-model="vm.state.keyboard">
+    <option value="us" ng-bind="vm.state.lang.keyboard.englishUs"></option>
+    <option value="gb" ng-bind="vm.state.lang.keyboard.englishUk"></option>
+    <option value="de" ng-bind="vm.state.lang.keyboard.german"></option>
+    <option value="fr" ng-bind="vm.state.lang.keyboard.french"></option>
+    <option value="es" ng-bind="vm.state.lang.keyboard.spanish"></option>
+  </select>
+</section>

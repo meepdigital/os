@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" ng-app="meepInstaller">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title ng-bind="vm.state.lang.index.installTitle"></title>
+    <link rel="stylesheet" href="installer.css">
+    <script defer src="renderer.js"></script>
+  </head>
+  <body ng-controller="InstallerController as vm">
+    <div class="installer-shell">
+      <header class="installer-header px-4 py-3 d-flex align-items-center gap-3">
+        <img class="brand-mark" src="installer.png" alt="Meep">
+        <div><div class="fw-semibold" ng-bind="vm.state.lang.index.installTitle"></div><div class="step-pill">{{ vm.stepLabel() }}</div></div>
+        <button id="return-to-os" class="btn btn-outline-light btn-sm ms-auto" type="button" ng-attr-aria-label="{{ vm.state.lang.index.ariaLabel }}" ng-click="vm.returnToOs()"><i class="fa-solid fa-xmark" aria-hidden="true"></i> <span ng-bind="vm.state.lang.index.returnToOs"></span></button>
+      </header>
+      <main class="installer-main page-transition py-4 py-lg-5" ng-class="vm.transitionClass" ng-include="vm.pageTemplate" onload="vm.templateLoaded()"></main>
+      <footer class="footer-bar px-4 py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex gap-2 ms-auto"><button id="back" class="btn btn-secondary" ng-disabled="vm.isFirstPage()" ng-click="vm.back()"><span ng-bind="vm.state.lang.index.back"></span></button><button id="next" class="btn btn-primary" ng-disabled="vm.isNextDisabled()" ng-click="vm.next()"><span ng-if="vm.isLastPage()" ng-bind="vm.state.lang.index.install"></span><span ng-if="!vm.isLastPage()" ng-bind="vm.state.lang.index.next"></span></button></div>
+      </footer>
+    </div>
+  </body>
+</html>

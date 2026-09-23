@@ -1,0 +1,18 @@
+<nav class="navbar navbar-dark bg-dark px-3 shadow-lg">
+  <div class="dropup">
+    <button id="launcher" class="launcher" type="button" aria-expanded="false" aria-controls="application-menu" title="Applications">
+      <i class="fa-solid fa-hand" aria-hidden="true"></i>
+      <span class="visually-hidden">Applications</span>
+    </button>
+    <div id="application-menu" class="dropdown-menu shadow" aria-labelledby="launcher">
+      <button class="dropdown-item" type="button" data-application="files"><i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i>Files</button>
+      <button class="dropdown-item" type="button" data-application="terminal"><i class="fa-solid fa-terminal me-2" aria-hidden="true"></i>Terminal</button>
+      <button class="dropdown-item" type="button" data-application="browser"><i class="fa-solid fa-globe me-2" aria-hidden="true"></i>Web Browser</button>
+    </div>
+  </div>
+  <span id="windows" class="navbar-text ms-3">No managed windows</span>
+  <div class="ms-auto d-flex gap-2">
+    <button id="terminal" class="btn btn-sm btn-outline-light" type="button">Terminal</button>
+    <button id="close" class="btn btn-sm btn-outline-danger" type="button">Close</button>
+  </div>
+</nav>

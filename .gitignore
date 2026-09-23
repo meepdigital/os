@@ -1,0 +1,12 @@
+/tmp/
+/*.iso
+/node_modules/
+
+/installer/node_modules/
+/installer/dist/
+/nodular/vendor/
+/nodular/build/
+/nodular/node_modules/
+/nodular/tmp/
+
+/meep.log
