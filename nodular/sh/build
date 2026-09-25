@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import '../src/js/core/env.js';
-import { compile } from 'sass';
-import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { root } from '../src/js/core/paths.js';
@@ -14,12 +13,5 @@ run('sh/twig_setup');
 run('node_modules/node-gyp/bin/node-gyp.js', ['configure']);
 run('node_modules/node-gyp/bin/node-gyp.js', ['build']);
 
-const stylesheet = compile(join(root, 'src/assets/style.scss'), {
-  style: 'compressed',
-  silenceDeprecations: ['import', 'global-builtin', 'color-functions', 'if-function'],
-});
 mkdirSync(join(root, 'build/assets'), { recursive: true });
-rmSync(join(root, 'build/assets/bootstrap.bundle.js'), { force: true });
-writeFileSync(join(root, 'build/assets/style.css'), stylesheet.css);
 cpSync(join(root, 'node_modules/@fortawesome/fontawesome-free/webfonts'), join(root, 'build/assets/webfonts'), { recursive: true });
-console.log('Compiled src/assets/style.scss -> build/assets/style.css');

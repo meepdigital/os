@@ -1,4 +1,6 @@
 import '../assets/bootstrap/dist/js/bootstrap.bundle.js'
+import '../assets/style.scss'
+import '../assets/style.less'
 import { initializeWindows } from './components/windows.js'
 import { initializeLauncher } from './components/launcher.js'
 import { initializeMenu } from './components/menu.js'
