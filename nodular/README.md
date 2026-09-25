@@ -59,6 +59,14 @@ can select another Electron executable; `NODULAR_BACKGROUND` selects wallpaper.
   launchTerminal) and the socket `command()` helper. Sessions allocate private
   sockets, so concurrent nested desktops do not share `/tmp/nodular.sock`.
 
+The native manager creates one X11 frame window for each managed client. It
+reparents the client into that frame, draws a small titlebar, handles titlebar
+focus and dragging, and keeps the client window ID as the stable identifier
+returned through the JavaScript socket API. JavaScript and future plugins can
+therefore control native clients without drawing overlays over them. The
+initial decoration model intentionally does not include compositing, animated
+effects, workspaces, or advanced resize behavior.
+
 ```js
 import { native } from './src/js/core/native.js';
 const x11 = await native('x11wm'); // build/Release/x11wm.node
